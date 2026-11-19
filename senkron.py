@@ -1,9 +1,10 @@
-"""ALBOND RAPORLAR klasöründeki pres üretim verisini bulut uygulamasına taşır.
+"""ALBOND RAPORLAR klasöründeki raporları bulut uygulamasına taşır.
 
-Windows Görev Zamanlayıcı bunu 15 dakikada bir çalıştırır. Dashboard
-Excel'i değiştiyse temizlenmiş kayıtları veri/pres_kayitlari.parquet'e
-yazar, private GitHub reposuna gönderir; Streamlit Cloud uygulaması da
-birkaç dakika içinde yenilenir. Değişiklik yoksa hiçbir şey yapmaz.
+Windows Görev Zamanlayıcı bunu 15 dakikada bir çalıştırır. Ekrandaki
+raporların (raporlar.AKTIF_RAPORLAR) kaynak Excel'i değiştiyse temizlenmiş
+veriyi veri/<anahtar>.parquet'e yazar ve private GitHub reposuna gönderir;
+Streamlit Cloud uygulaması birkaç dakika içinde yenilenir. Değişiklik
+yoksa hiçbir şey yapmaz.
 
 Elle çalıştırma:  python senkron.py   (zorla: python senkron.py --zorla)
 """
@@ -13,6 +14,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+import raporlar
 import veri
 
 KOK = Path(__file__).resolve().parent
@@ -31,33 +33,47 @@ def git(*arg):
 
 
 def main(zorla=False):
-    dosya = veri.dashboard_dosyasi(veri.VARSAYILAN_KLASOR)
-    if dosya is None:
-        yaz(f"Dashboard dosyası bulunamadı: {veri.VARSAYILAN_KLASOR}")
-        return 1
-    degisme = round(dosya.stat().st_mtime)
-    onceki = veri.bulut_bilgisi()
-    if not zorla and onceki.get("kaynak") == dosya.name and onceki.get("degisme") == degisme:
-        return 0  # değişiklik yok
+    bilgi = veri.bulut_bilgisi()
+    onceki = bilgi.get("raporlar", {})
+    yeni, degisen = {}, []
+    for anahtar in raporlar.AKTIF_RAPORLAR:
+        yol = raporlar.kaynak_dosyasi(anahtar)
+        if yol is None:
+            yaz(f"{anahtar}: kaynak dosya bulunamadı")
+            if anahtar in onceki:
+                yeni[anahtar] = onceki[anahtar]
+            continue
+        durum = {"kaynak": yol.name, "degisme": round(yol.stat().st_mtime)}
+        yeni[anahtar] = durum
+        if zorla or onceki.get(anahtar) != durum:
+            tablo = raporlar.oku(anahtar, yol)
+            hedef = raporlar.bulut_dosyasi(anahtar)
+            hedef.parent.mkdir(exist_ok=True)
+            tablo.to_parquet(hedef, index=False)
+            durum["kayit"] = len(tablo)
+            degisen.append(f"{anahtar} ({len(tablo)})")
+        else:
+            durum["kayit"] = onceki[anahtar].get("kayit")
+    # Ekrandan kaldırılmış raporların eski bulut dosyaları silinir
+    for eski in (veri.UYGULAMA_KLASORU / "veri").glob("*.parquet"):
+        if eski.stem not in raporlar.AKTIF_RAPORLAR:
+            eski.unlink()
+            degisen.append(f"{eski.stem} kaldırıldı")
+    if not degisen:
+        return 0
 
-    kayitlar = veri.pres_kayitlari(dosya)
-    veri.BULUT_VERI.parent.mkdir(exist_ok=True)
-    kayitlar.to_parquet(veri.BULUT_VERI, index=False)
     veri.BULUT_BILGI.write_text(json.dumps({
-        "kaynak": dosya.name, "degisme": degisme, "kayit": len(kayitlar),
-        "olusturma": dt.datetime.now().isoformat(timespec="seconds"),
+        "raporlar": yeni, "olusturma": dt.datetime.now().isoformat(timespec="seconds"),
     }, ensure_ascii=False, indent=1), encoding="utf-8")
-
-    git("add", "veri")
-    sonuc = git("commit", "-m", f"Veri güncellendi: {dosya.name} ({len(kayitlar)} kayıt)")
+    git("add", "-A", "veri")
+    sonuc = git("commit", "-m", "Veri güncellendi: " + ", ".join(degisen))
     if sonuc.returncode != 0 and "nothing to commit" in (sonuc.stdout + sonuc.stderr):
-        yaz("Veri aynı, gönderilecek değişiklik yok")
         return 0
     gonder = git("push", "-q")
     if gonder.returncode != 0:
         yaz(f"GÖNDERİLEMEDİ: {gonder.stderr.strip()}")
         return 1
-    yaz(f"Gönderildi: {dosya.name} · {len(kayitlar)} kayıt")
+    yaz("Gönderildi: " + ", ".join(degisen))
     return 0
 
 
