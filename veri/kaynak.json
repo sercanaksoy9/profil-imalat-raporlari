@@ -1,1 +1,15 @@
-{"raporlar": {"pres_rapor_ozet": {"kaynak": "2026 PRES ÜRETİM RAPORU.REV..xlsx", "degisme": 1795093806, "kayit": 22}, "pres_rapor_gunluk": {"kaynak": "2026 PRES ÜRETİM RAPORU.REV..xlsx", "degisme": 1795093806, "kayit": 191}}}
+{
+ "raporlar": {
+  "pres_rapor_ozet": {
+   "kaynak": "2026 PRES ÜRETİM RAPORU.REV..xlsx",
+   "degisme": 1795093806,
+   "kayit": 22
+  },
+  "pres_rapor_gunluk": {
+   "kaynak": "2026 PRES ÜRETİM RAPORU.REV..xlsx",
+   "degisme": 1795093806,
+   "kayit": 191
+  }
+ },
+ "olusturma": "2026-11-19T18:23:15"
+}
