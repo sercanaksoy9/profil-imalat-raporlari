@@ -8,6 +8,7 @@ Veri klasörü (öncelik sırasıyla):
 Pres üretim kayıtları, klasördeki en yeni *DASHBOARD*.xlsx dosyasının
 'Temiz veri' sayfasından okunur ('Eski' adlı klasörler atlanır).
 """
+import json
 import os
 from pathlib import Path
 
@@ -38,6 +39,29 @@ def dashboard_dosyasi(kok=None):
                if "dashboard" in y.name.lower() and not y.name.startswith("~$")
                and not _eski_mi(y, kok)]
     return max(adaylar, key=lambda y: y.stat().st_mtime) if adaylar else None
+
+
+# Bulut kopyası: senkron.py, Excel'den temizlenmiş kayıtları buraya yazar
+BULUT_VERI = UYGULAMA_KLASORU / "veri" / "pres_kayitlari.parquet"
+BULUT_BILGI = UYGULAMA_KLASORU / "veri" / "kaynak.json"
+
+
+def kaynak():
+    """Panonun okuyacağı veri: ('excel', yol) bu bilgisayarda, yoksa
+    ('ozet', parquet yolu) bulutta. Hiçbiri yoksa (None, None)."""
+    dosya = dashboard_dosyasi()
+    if dosya is not None:
+        return "excel", dosya
+    if BULUT_VERI.exists():
+        return "ozet", BULUT_VERI
+    return None, None
+
+
+def bulut_bilgisi():
+    try:
+        return json.loads(BULUT_BILGI.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
 
 
 def klasor_imzasi(kok=None):

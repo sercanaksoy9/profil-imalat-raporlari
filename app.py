@@ -38,6 +38,11 @@ def kayitlari_oku(yol, degisme_zamani):
     return veri.pres_kayitlari(yol)
 
 
+@st.cache_data(show_spinner="Üretim kayıtları okunuyor...")
+def ozet_oku(yol, degisme_zamani):
+    return pd.read_parquet(yol)
+
+
 @st.fragment(run_every="60s")
 def klasor_izle():
     """Veri klasörü değişince sayfayı yeniden çalıştırır."""
@@ -54,17 +59,26 @@ def klasor_izle():
 st.title("📊 Profil İmalat Üretim Raporları")
 klasor_izle()
 
-klasor = veri.veri_klasoru()
-dosya = veri.dashboard_dosyasi(klasor)
+tur, dosya = veri.kaynak()
 if dosya is None:
-    st.error(f"Veri klasöründe pres üretim dosyası (*DASHBOARD*.xlsx) bulunamadı: {klasor}")
+    st.error("Pres üretim verisi bulunamadı (veri klasöründe *DASHBOARD*.xlsx "
+             f"ya da bulut özeti yok): {veri.veri_klasoru()}")
     st.stop()
 
-degisme = dosya.stat().st_mtime
-tum = kayitlari_oku(str(dosya), degisme)
-st.caption(f"📁 Kaynak: **{dosya.name}** · son değişiklik "
+if tur == "excel":
+    degisme = dosya.stat().st_mtime
+    tum = kayitlari_oku(str(dosya), degisme)
+    kaynak_adi = dosya.name
+    not_ = "klasör 1 dakikada bir kontrol edilir"
+else:  # bulut: senkron.py'nin yazdığı özet
+    tum = ozet_oku(str(dosya), dosya.stat().st_mtime)
+    bilgi = veri.bulut_bilgisi()
+    degisme = bilgi.get("degisme", dosya.stat().st_mtime)
+    kaynak_adi = bilgi.get("kaynak", dosya.name)
+    not_ = "klasöre giren veri birkaç dakika içinde buraya gelir"
+st.caption(f"📁 Kaynak: **{kaynak_adi}** · son değişiklik "
            f"{pd.Timestamp(degisme, unit='s', tz='UTC').tz_convert('Europe/Istanbul'):%d.%m.%Y %H:%M}"
-           f" · {sayi(len(tum))} kayıt · klasör 1 dakikada bir kontrol edilir")
+           f" · {sayi(len(tum))} kayıt · {not_}")
 
 # ---------------------------------------------------------------------
 # Filtreler (tek sıra, grafiklerin üstünde)
