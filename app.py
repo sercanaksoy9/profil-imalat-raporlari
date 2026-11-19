@@ -29,5 +29,7 @@ SAYFALAR = [
     st.Page("sayfa_pres_uretim.py", title="2026 Pres Üretim Raporu", icon="🏭",
             url_path="pres-uretim-2026", default=True),
     st.Page("sayfa_fire.py", title="Toplam Fire 2026", icon="♻️", url_path="toplam-fire-2026"),
+    st.Page("sayfa_pres_aylik.py", title="Pres Üretimler Aylık 2023-2026", icon="📅",
+            url_path="pres-uretimler-aylik"),
 ]
 st.navigation(SAYFALAR, position="top").run()
