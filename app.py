@@ -31,5 +31,7 @@ SAYFALAR = [
     st.Page("sayfa_fire.py", title="Toplam Fire 2026", icon="♻️", url_path="toplam-fire-2026"),
     st.Page("sayfa_pres_aylik.py", title="Pres Üretimler Aylık 2023-2026", icon="📅",
             url_path="pres-uretimler-aylik"),
+    st.Page("sayfa_enerji.py", title="Enerji Sarfiyatlar 2026", icon="⚡",
+            url_path="enerji-sarfiyatlar-2026"),
 ]
 st.navigation(SAYFALAR, position="top").run()

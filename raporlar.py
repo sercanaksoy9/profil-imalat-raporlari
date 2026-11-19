@@ -35,7 +35,7 @@ def _ay_no(metin):
 # anahtar: (dosya adında olması gereken kelimeler, olmaması gerekenler, okuyucu)
 RAPORLAR = {}
 # Ekranda olan ve buluta gönderilen raporlar (yeni başlık eklenince buraya)
-AKTIF_RAPORLAR = ["pres_rapor_ozet", "pres_rapor_gunluk", "fire", "uretim_aylik"]
+AKTIF_RAPORLAR = ["pres_rapor_ozet", "pres_rapor_gunluk", "fire", "uretim_aylik", "enerji"]
 
 
 def rapor(anahtar, kelimeler, haric=()):
@@ -299,39 +299,152 @@ def fire_ozet(t):
 
 
 # ---------------------------------------------------------------------
-# Enerji: '2026 | OCAK ... ARALIK' başlıklı bloklar; satırlarda göstergeler
+# Enerji Sarfiyatlar 2026: sayfalarda '2026 | OCAK ... ARALIK' başlıklı
+# bloklar (bazı sayfalarda iki blok yan yana). Her kalem blok başlığı ve
+# satır etiketiyle bulunur; türetilen göstergeler enerji_ozet'te Excel'deki
+# formüllerle hesaplanır.
 # ---------------------------------------------------------------------
+def _ay_bloklari(d):
+    """(blok başlığı, etiket, {ay: değer}) listesi."""
+    cikti = []
+    for i in range(len(d)):
+        aylar = {j: _ay_no(v) for j, v in d.iloc[i].items() if isinstance(v, str) and _ay_no(v)}
+        if len(aylar) < 6:
+            continue
+        sutunlar = sorted(aylar)
+        parcalar, parca = [], [sutunlar[0]]
+        for j in sutunlar[1:]:
+            if j == parca[-1] + 1:
+                parca.append(j)
+            else:
+                parcalar.append(parca)
+                parca = [j]
+        parcalar.append(parca)
+        for parca in parcalar:
+            etiket_sut = parca[0] - 1
+            if etiket_sut < 0:
+                continue
+            baslik = ""
+            for geri in (1, 2):
+                if i - geri >= 0 and isinstance(d.iat[i - geri, etiket_sut], str):
+                    baslik = d.iat[i - geri, etiket_sut]
+                    break
+            for k in range(i + 1, min(i + 25, len(d))):
+                etiket = d.iat[k, etiket_sut]
+                if not isinstance(etiket, str):
+                    break
+                degerler = {aylar[j]: pd.to_numeric(d.iat[k, j], errors="coerce") for j in parca}
+                cikti.append((baslik, etiket, degerler))
+    return cikti
+
+
+# (sayfa başı, blok başlığında geçen, etikette geçen, sütun adı): ilk eşleşen alınır
+ENERJI_KALEM = [
+    ('6" pres', "elektrik tuketimi kompresor", "tuketim miktari", "p6_komp_kwh"),
+    ('6" pres', "elektrik tuketimi kompresor", "calisma saati", "p6_komp_saat"),
+    ('6" pres', "elektrik tuketimi", "tuketim miktari", "p6_kwh"),
+    ('6" pres', "elektrik tuketimi", "kullanilan hammadde", "p6_hammadde"),
+    ('6" pres', "dogalgaz", "tuketim miktari", "p6_gaz"),
+    ('8" pres', "elektrik tuketimi kompresor", "tuketim miktari", "p8_komp_kwh"),
+    ('8" pres', "elektrik tuketimi kompresor", "calisma saati", "p8_komp_saat"),
+    ('8" pres', "elektrik tuketimi", "tuketim miktari", "p8_kwh"),
+    ('8" pres', "elektrik tuketimi", "kullanilan hammadde", "p8_hammadde"),
+    ('8" pres', "dogalgaz", "tuketim miktari", "p8_gaz"),
+    ("termikler", "termik", "dogalgaz tuketimi m3", "termik_gaz"),
+    ("termikler", "termik", "uretim kg", "termik_uretim"),
+    ("boyahane", "dogalgaz", "dogalgaz tuketimi m3", "boya_gaz"),
+    ("boyahane", "dogalgaz", "boyahane uretim", "boya_uretim"),
+    ("boyahane", "elektrik", "tuketim miktari", "boya_kwh"),
+    ("toplam", "profil imalat elektrik", "fabrika tuketim miktari", "fab_kwh"),
+    ("toplam", "profil imalat elektrik", "ana pano", "ana_pano_kwh"),
+    ("toplam", "profil imalat elektrik", "kompresor ana hat", "komp_ana_hat_kwh"),
+    ("toplam", "profil imalat elektrik", "kompresor tuketim", "komp_kwh"),
+    ("toplam", "profil imalat elektrik", "fatura bedeli", "fab_elk_tl"),
+    ("toplam", "profil imalat elektrik", "presler aylik uretim", "pres_uretim"),
+    ("toplam", "boyahane dogalgaz", "fabrika tuketim miktari", "fab_gaz_m3"),
+    ("toplam", "boyahane dogalgaz", "odenen dogalgaz", "fab_gaz_tl"),
+    ("toplam", "profil+termik", "dolar kuru", "dolar"),
+]
+
+
 @rapor("enerji", ("sarfiyat",))
 def enerji(yol):
-    satirlar = []
+    """Aylık enerji tablosu: her satır bir ay, sütunlar ENERJI_KALEM adları."""
+    yil = int((re.findall(r"20\d\d", Path(yol).name) or [2026])[0])
+    veri_ = {}
     for sayfa in pd.ExcelFile(yol).sheet_names:
-        if any(k in _sade(sayfa) for k in ("dashboard", "veriler", "kcal")):
+        s = _sade(sayfa)
+        if any(k in s for k in ("dashboard", "veriler", "kcal", "eloksal")):
             continue
-        d = pd.read_excel(yol, sheet_name=sayfa, header=None)
-        for i in range(len(d)):
-            satir = d.iloc[i]
-            aylar = {j: _ay_no(v) for j, v in satir.items() if isinstance(v, str) and _ay_no(v)}
-            yil = next((int(v) for v in satir if isinstance(v, (int, float))
-                        and pd.notna(v) and 2000 < v < 2100), None)
-            if len(aylar) < 6 or not yil:
+        bloklar = _ay_bloklari(pd.read_excel(yol, sheet_name=sayfa, header=None))
+        for sayfa_k, blok_k, etiket_k, ad in ENERJI_KALEM:
+            if ad in veri_ or not s.startswith(sayfa_k):
                 continue
-            ilk = min(aylar)
-            blok = next((str(v).strip() for v in d.iloc[i - 1] if isinstance(v, str)), sayfa) if i else sayfa
-            for k in range(i + 1, min(i + 20, len(d))):
-                etiket = next((v for v in d.iloc[k, :ilk] if isinstance(v, str)), None)
-                if etiket is None:
-                    if d.iloc[k].isna().all():
-                        break
-                    continue
-                if _ay_no(etiket) or re.fullmatch(r"\d{4}", str(etiket).strip()):
+            for baslik, etiket, degerler in bloklar:
+                if blok_k in _sade(baslik) and etiket_k in _sade(etiket):
+                    veri_[ad] = degerler
                     break
-                for j, ay in aylar.items():
-                    deger = pd.to_numeric(d.iat[k, j], errors="coerce")
-                    if pd.notna(deger):
-                        satirlar.append({"sayfa": sayfa.strip(), "blok": blok,
-                                         "gosterge": re.sub(r"\s+", " ", str(etiket)).strip(),
-                                         "tarih": pd.Timestamp(yil, ay, 1), "deger": float(deger)})
-    return pd.DataFrame(satirlar).drop_duplicates(["sayfa", "blok", "gosterge", "tarih"])
+    if not veri_:
+        return pd.DataFrame()
+    d = pd.DataFrame(veri_).sort_index()
+    d.index.name = "ay_no"
+    d = d.reset_index()
+    d.insert(0, "tarih", [pd.Timestamp(yil, int(a), 1) for a in d["ay_no"]])
+    for _, _, _, ad in ENERJI_KALEM:
+        if ad not in d:
+            d[ad] = float("nan")
+    # Girilmiş aylar: fabrika ya da pres elektrik tüketimi olanlar
+    d = d[d[["fab_kwh", "p6_kwh", "p8_kwh"]].fillna(0).sum(axis=1) > 0]
+    return d.drop(columns="ay_no").reset_index(drop=True)
+
+
+def enerji_ozet(t):
+    """Bir dönemin toplamları ve türetilmiş göstergeler. Oranlar dönem
+    toplamlarından hesaplanır (aylık oranların ortalaması değil); TL→$
+    çevrimi her ayın kendi kuruyla yapılır. Bölüm faturası = bölüm tüketimi ×
+    fabrika ortalama birim fiyatı (Excel'deki dağılım oranı yöntemiyle aynı)."""
+    t = t.copy()
+    sifir = lambda c: t[c].fillna(0)
+    t["pres_kwh"] = sifir("p6_kwh") + sifir("p8_kwh")
+    t["prese_ait_kwh"] = sifir("ana_pano_kwh") - sifir("komp_ana_hat_kwh") + sifir("komp_kwh")
+    t["elk_birim_ay"] = (t["fab_elk_tl"] / t["fab_kwh"]).where(t["fab_kwh"] > 0)
+    t["gaz_birim_ay"] = (t["fab_gaz_tl"] / t["fab_gaz_m3"]).where(t["fab_gaz_m3"] > 0)
+    t["pres_elk_tl"] = t["prese_ait_kwh"] * t["elk_birim_ay"]
+    t["boya_elk_tl"] = sifir("boya_kwh") * t["elk_birim_ay"]
+    t["pres_gaz"] = sifir("p6_gaz") + sifir("p8_gaz") + sifir("termik_gaz")
+    t["pres_gaz_tl"] = t["pres_gaz"] * t["gaz_birim_ay"]
+    t["boya_gaz_tl"] = sifir("boya_gaz") * t["gaz_birim_ay"]
+    for c in ("pres_elk_tl", "boya_elk_tl", "pres_gaz_tl", "boya_gaz_tl", "fab_elk_tl", "fab_gaz_tl"):
+        t[c.replace("_tl", "_usd")] = t[c] / t["dolar"]
+    toplam = t.drop(columns=["elk_birim_ay", "gaz_birim_ay"]).sum(numeric_only=True, min_count=1)
+    s = {k: (None if pd.isna(v) else float(v)) for k, v in toplam.items()}
+
+    def oran(a, b, k=1000.0):
+        return s[a] / s[b] * k if s.get(a) is not None and s.get(b) else None
+
+    s.update({
+        "ay": int(len(t)),
+        "p6_kwh_ton": oran("p6_kwh", "p6_hammadde"), "p8_kwh_ton": oran("p8_kwh", "p8_hammadde"),
+        "p6_gaz_ton": oran("p6_gaz", "p6_hammadde"), "p8_gaz_ton": oran("p8_gaz", "p8_hammadde"),
+        "termik_gaz_ton": oran("termik_gaz", "termik_uretim"),
+        "pres_kwh_ton": oran("pres_kwh", "pres_uretim"),
+        "hat_kwh_ton": oran("prese_ait_kwh", "pres_uretim"),
+        "pres_gaz_ton": oran("pres_gaz", "pres_uretim"),
+        "boya_kwh_ton": oran("boya_kwh", "boya_uretim"), "boya_gaz_ton": oran("boya_gaz", "boya_uretim"),
+        "pres_elk_usd_ton": oran("pres_elk_usd", "pres_uretim"),
+        "pres_gaz_usd_ton": oran("pres_gaz_usd", "pres_uretim"),
+        "boya_elk_usd_ton": oran("boya_elk_usd", "boya_uretim"),
+        "boya_gaz_usd_ton": oran("boya_gaz_usd", "boya_uretim"),
+        "elk_birim": oran("fab_elk_tl", "fab_kwh", 1), "gaz_birim": oran("fab_gaz_tl", "fab_gaz_m3", 1),
+        "pres_elk_pay": oran("prese_ait_kwh", "fab_kwh", 1),
+        "boya_elk_pay": oran("boya_kwh", "fab_kwh", 1),
+        "pres_gaz_pay": oran("pres_gaz", "fab_gaz_m3", 1),
+        "boya_gaz_pay": oran("boya_gaz", "fab_gaz_m3", 1),
+    })
+    for bolum in ("pres", "boya"):
+        e, g = s[f"{bolum}_elk_usd_ton"], s[f"{bolum}_gaz_usd_ton"]
+        s[f"{bolum}_enerji_usd_ton"] = None if e is None and g is None else (e or 0) + (g or 0)
+    return s
 
 
 # ---------------------------------------------------------------------
