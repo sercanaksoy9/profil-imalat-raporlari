@@ -134,7 +134,7 @@ with sekme[0]:
     st.subheader("Aylık üretim (ton)")
     st.altair_chart(
         alt.Chart(t).mark_bar(cornerRadiusTopLeft=3, cornerRadiusTopRight=3,
-                              stroke="white", strokeWidth=1)
+                              stroke="#121b2d", strokeWidth=1)
         .encode(x=x, y=alt.Y("ton:Q", title="Ton", stack=True), color=renk, tooltip=ipucu)
         .properties(height=300), use_container_width=True)
     sol, sag = st.columns(2)
@@ -211,7 +211,7 @@ with sekme[1]:
                  alt.Tooltip("kg/saat:Q", format=",.0f"), alt.Tooltip("kg/gün:Q", format=",.0f"),
                  alt.Tooltip("Çalışma saati:Q", format=",.0f")])
     # Tonajlar çubukların altında (eksenin hemen altı)
-    yazi = temel.mark_text(baseline="top", dy=6, fontSize=11).encode(
+    yazi = temel.mark_text(baseline="top", dy=6, fontSize=11, color="#cfd9ea").encode(
         y=alt.datum(0), text="ton_yazi:N")
     st.altair_chart((cubuk + yazi).properties(height=340), use_container_width=True)
     with st.expander("Ayrıntılı yıllık tablo"):

@@ -1,0 +1,19 @@
+# Koyu "kontrol odası" teması
+[theme]
+base = "dark"
+primaryColor = "#3987e5"
+backgroundColor = "#0a101c"
+secondaryBackgroundColor = "#121b2d"
+textColor = "#e4eaf4"
+borderColor = "#22304a"
+dataframeBorderColor = "#22304a"
+dataframeHeaderBackgroundColor = "#16213a"
+showWidgetBorder = true
+baseRadius = "10px"
+font = "Inter:https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+headingFont = "Inter:https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+metricValueFontWeight = 700
+chartCategoricalColors = ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181", "#0ca30c", "#9085e9", "#e66767"]
+
+[client]
+toolbarMode = "minimal"

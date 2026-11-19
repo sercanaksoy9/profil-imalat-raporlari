@@ -8,11 +8,75 @@ import veri
 
 AY_ADI = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki",
           "Kas", "Ara"]
-# Doğrulanmış kategorik paletin sabit sırası (renk varlığı izler, sırayı değil)
-PALET = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300",
-         "#6250d6", "#e34948"]
+# Doğrulanmış kategorik paletin koyu zemin tonları, sabit sıra
+# (renk varlığı izler, sırayı değil)
+PALET = ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181", "#0ca30c",
+         "#9085e9", "#e66767"]
 PRES_RENK = alt.Scale(domain=['6"', '8"'], range=PALET[:2])
 TEK_RENK = PALET[0]
+ZEMIN = "#121b2d"      # kart / grafik zemini (çubuklar arası boşluk rengi)
+SONUK = "#4f5a70"      # "geri kalanı" gibi ikincil kalemler
+
+TEMA_CSS = """
+<style>
+/* Üst menü şeridi */
+[data-testid="stHeader"] { background: #0a101c; border-bottom: 1px solid #1c2740; }
+[data-testid="stAppDeployButton"] { display: none; }
+.block-container { padding-top: 3.6rem; max-width: 1500px; }
+
+/* Marka şeridi */
+.albond-bant { display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; flex-wrap: wrap; margin: 0 0 1.1rem 0; padding: 12px 18px;
+  background: linear-gradient(90deg, #13213d 0%, #0f1a30 60%, #0b1324 100%);
+  border: 1px solid #22304a; border-left: 4px solid #3987e5; border-radius: 10px; }
+.albond-bant .marka { font-weight: 800; letter-spacing: .14em; color: #fff; font-size: .95rem; }
+.albond-bant .marka span { color: #8fb4f0; font-weight: 600; letter-spacing: .04em;
+  margin-left: 10px; font-size: .9rem; }
+.albond-bant .canli { color: #9fb0cc; font-size: .8rem; white-space: nowrap; }
+.albond-bant .nokta { display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  background: #22c55e; box-shadow: 0 0 0 0 rgba(34,197,94,.6); margin-right: 6px;
+  animation: nabiz 2s infinite; vertical-align: middle; }
+@keyframes nabiz { 0% { box-shadow: 0 0 0 0 rgba(34,197,94,.55); }
+  70% { box-shadow: 0 0 0 8px rgba(34,197,94,0); } 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); } }
+
+/* Başlıklar */
+h1 { font-size: 1.85rem !important; font-weight: 800 !important; letter-spacing: -.01em; }
+h3 { font-size: 1.05rem !important; font-weight: 700 !important; color: #cfd9ea !important;
+  text-transform: none; }
+h4 { color: #e4eaf4 !important; font-weight: 700 !important; }
+
+/* Gösterge kartları */
+[data-testid="stMetric"] { background: linear-gradient(180deg, #152038 0%, #111a2c 100%);
+  border: 1px solid #22304a; border-left: 4px solid #3987e5; border-radius: 10px;
+  padding: 14px 16px 12px 16px; box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+[data-testid="stMetricLabel"] p { text-transform: uppercase; letter-spacing: .07em;
+  font-size: .72rem !important; font-weight: 600; color: #8b9bb8 !important; }
+[data-testid="stMetricValue"] { color: #ffffff; font-size: 2rem !important; line-height: 1.15; }
+
+/* Grafik ve tablo kartları */
+[data-testid="stVegaLiteChart"] { background: #121b2d; border: 1px solid #22304a;
+  border-radius: 10px; padding: 10px 8px 4px 8px; }
+[data-testid="stDataFrame"] { border-radius: 10px; }
+
+/* Sekmeler */
+[data-baseweb="tab-list"] { gap: 4px; border-bottom: 1px solid #22304a; }
+[data-baseweb="tab"] { font-weight: 600; padding: 8px 14px !important; border-radius: 8px 8px 0 0; }
+[data-baseweb="tab"][aria-selected="true"] { background: #16213a; }
+
+/* Açıklama yazıları */
+[data-testid="stCaptionContainer"] { color: #8392ad !important; }
+</style>
+"""
+
+
+def tema_uygula():
+    """Kart/şerit stilleri ve üstte marka şeridi (app.py her çalışmada çağırır)."""
+    import time
+    st.markdown(TEMA_CSS, unsafe_allow_html=True)
+    st.markdown(
+        '<div class="albond-bant"><div class="marka">ALBOND<span>Profil İmalat Üretim '
+        'Raporları</span></div><div class="canli"><span class="nokta"></span>CANLI · '
+        f'{tarih_saat(time.time())}</div></div>', unsafe_allow_html=True)
 
 
 def sayi(v, ondalik=0):

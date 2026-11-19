@@ -6,6 +6,7 @@ değişince pano kendini yeniler (1 dakikada bir bakar).
 """
 import streamlit as st
 
+import ortak
 import veri
 
 st.set_page_config(page_title="Profil İmalat Üretim Raporları", page_icon="📊",
@@ -23,6 +24,7 @@ def klasor_izle():
 
 
 klasor_izle()
+ortak.tema_uygula()
 
 # Raporlar (başlıklar): yenisi eklendikçe bu listeye bir satır gelir
 SAYFALAR = [
