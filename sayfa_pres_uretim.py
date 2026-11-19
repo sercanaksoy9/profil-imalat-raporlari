@@ -11,7 +11,8 @@ import altair as alt
 import pandas as pd
 import streamlit as st
 
-from ortak import PALET, PRES_RENK, TEK_RENK, ay_etiketi, kaynak_notu, rapor_verisi, sayi
+from ortak import (PALET, PRES_RENK, TEK_RENK, ay_etiketi, donem_sec, kaynak_notu,
+                   rapor_verisi, sayi)
 
 DURUS_ADI = {"ariza": "Arıza", "isletme": "İşletme", "elektrik": "Elektrik Kesintisi",
              "planli": "Planlı Duruş", "diger": "Diğer Duruş", "iftar": "İftar Duruşu"}
@@ -91,31 +92,10 @@ def aralik_sec(bas, bit, presler):
 # ---------------------------------------------------------------------
 # Filtreler: pres + tarih aralığı
 # ---------------------------------------------------------------------
-bugun = son_gun
-HAZIR = {
-    "Bu ay": (bugun.replace(day=1), bugun),
-    "Geçen ay": ((bugun.replace(day=1) - dt.timedelta(days=1)).replace(day=1),
-                 bugun.replace(day=1) - dt.timedelta(days=1)),
-    "Son 7 gün": (bugun - dt.timedelta(days=6), bugun),
-    "Son 30 gün": (bugun - dt.timedelta(days=29), bugun),
-    "Son 3 ay": ((pd.Timestamp(bugun) - pd.DateOffset(months=3)).date() + dt.timedelta(days=1), bugun),
-    "Yılbaşından beri": (ilk_gun, bugun),
-    "Özel aralık": None,
-}
-f1, f2, f3 = st.columns([1, 1.3, 1.7])
+f1, f_donem = st.columns([1, 3])
 presler = f1.multiselect("Pres", ['6"', '8"'], default=['6"', '8"'])
-hazir = f2.selectbox("Dönem", list(HAZIR), index=list(HAZIR).index("Yılbaşından beri"))
-if HAZIR[hazir] is None:
-    secim = f3.date_input("Tarih aralığı", value=(bugun.replace(day=1), bugun),
-                          min_value=ilk_gun, max_value=bugun, format="DD.MM.YYYY")
-    if not isinstance(secim, (tuple, list)) or len(secim) < 2:
-        st.info("Bitiş tarihini de seçin.")
-        st.stop()
-    bas, bit = secim[0], secim[1]
-else:
-    bas, bit = HAZIR[hazir]
-    bas = max(bas, ilk_gun)
-    f3.text_input("Tarih aralığı", f"{bas:%d.%m.%Y} – {bit:%d.%m.%Y}", disabled=True)
+with f_donem:
+    bas, bit = donem_sec(ilk_gun, son_gun)
 
 o = aralik_sec(bas, bit, presler)
 if o.empty:

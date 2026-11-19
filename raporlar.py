@@ -35,7 +35,7 @@ def _ay_no(metin):
 # anahtar: (dosya adında olması gereken kelimeler, olmaması gerekenler, okuyucu)
 RAPORLAR = {}
 # Ekranda olan ve buluta gönderilen raporlar (yeni başlık eklenince buraya)
-AKTIF_RAPORLAR = ["pres_rapor_ozet", "pres_rapor_gunluk"]
+AKTIF_RAPORLAR = ["pres_rapor_ozet", "pres_rapor_gunluk", "fire"]
 
 
 def rapor(anahtar, kelimeler, haric=()):
@@ -226,53 +226,76 @@ def tozboya_aylik(yol):
 
 
 # ---------------------------------------------------------------------
-# Fire: her ay için günlük satırlar ('<Ay> 2026' sayfaları)
+# Toplam Fire Listesi 2026: ay sayfalarında günlük satırlar. Sayfada bir
+# sonraki ayın ilk günü de olabildiği için (DASBORD'daki SUMIFS gibi) her
+# sayfadan yalnız kendi ayının günleri alınır.
 # ---------------------------------------------------------------------
 FIRE_SUTUN = {
-    "tarih": "tarih", "disari giden arais": "arais_kg",
-    "teorik kullanilan hammadde": "teorik_hammadde",
-    "net kullanilan hammadde": "net_hammadde",
-    "sepete giren (testere)": "sepete_giren",
-    "pres sonrasi atilan hurda (tartim)": "pres_sonrasi_hurda",
-    "iade hurda kg (tartim)": "iade_hurda", "stok hurda kg (tartim)": "stok_hurda",
-    "numune hurda kg (tartim)": "numune_hurda", "talas kg (tartim)": "talas",
-    "hassas kesim": "hassas_kesim",
-    "pres/pres sonrasi toplam kantar hurda": "toplam_hurda",
-    "gelen hammadde": "gelen_hammadde",
+    "disari giden arais": "arais", "teorik kullanilan hammadde": "teorik",
+    "net kullanilan hammadde": "net", "sepete giren (testere)": "sepete",
+    "pres sonrasi atilan hurda (teorik)": "ps_teorik",
+    "pres sonrasi atilan hurda (tartim)": "ps_tartim",
+    "iade hurda kg (tartim)": "iade", "stok hurda kg (tartim)": "stok",
+    "numune hurda kg (tartim)": "numune", "talas kg (tartim)": "talas",
+    "hassas kesim": "hassas", "hammadde sayim": "sayim", "gelen hammadde": "gelen",
+    "boyahane/eloksal kantar fisi": "boya_kantar", "sevkiyat kantar fisi": "sevk_kantar",
+    "hammadde tartim kantar (kg)": "ham_kantar", "rampa (kg)": "rampa",
+    "net kullanilan hammadde (kantara gore)": "net_kantar",
+    "arais tartim (kantara gore)": "arais_kantar",
 }
+FIRE_DEGER = [c for c in FIRE_SUTUN.values() if c != "sayim"]
 
 
 @rapor("fire", ("fire listesi",))
 def fire_gunluk(yol):
     parcalar = []
     for sayfa in pd.ExcelFile(yol).sheet_names:
-        if not re.fullmatch(r"[a-z]+ \d{4}", _sade(sayfa)) or not _ay_no(_sade(sayfa).split()[0]):
+        s = re.sub(r"\s+", " ", _sade(sayfa))
+        m = re.fullmatch(r"([a-z]+) (20\d\d)", s)
+        if not m or not _ay_no(m.group(1)):
             continue
         d = pd.read_excel(yol, sheet_name=sayfa)
         d.columns = [re.sub(r"\s+", " ", _sade(c)) for c in d.columns]
-        d = d.rename(columns=FIRE_SUTUN)
-        d = d[[c for c in FIRE_SUTUN.values() if c in d.columns]]
+        d = d.rename(columns={"tarih": "tarih", **FIRE_SUTUN})
+        d = d[["tarih"] + [c for c in FIRE_SUTUN.values() if c in d.columns]].copy()
         d["tarih"] = pd.to_datetime(d["tarih"], errors="coerce")
-        d = d[d["tarih"].notna()]
-        for c in d.columns:
-            if c != "tarih":
-                d[c] = pd.to_numeric(d[c], errors="coerce")
+        ay, yil = _ay_no(m.group(1)), int(m.group(2))
+        d = d[(d["tarih"].dt.month == ay) & (d["tarih"].dt.year == yil)]
+        for c in d.columns[1:]:
+            d[c] = pd.to_numeric(d[c], errors="coerce")
         parcalar.append(d)
     if not parcalar:
-        return pd.DataFrame(columns=list(FIRE_SUTUN.values()))
-    return (pd.concat(parcalar).drop_duplicates("tarih", keep="last")
-            .sort_values("tarih").reset_index(drop=True))
+        return pd.DataFrame(columns=["tarih"] + list(FIRE_SUTUN.values()))
+    d = pd.concat(parcalar, ignore_index=True)
+    for c in FIRE_SUTUN.values():
+        if c not in d.columns:
+            d[c] = float("nan")
+    # Kayıt girilmiş günler: hammadde ya da testere değeri olanlar
+    d["kayitli"] = d[["teorik", "net", "sepete"]].notna().any(axis=1)
+    d[FIRE_DEGER] = d[FIRE_DEGER].fillna(0)
+    return (d.drop_duplicates("tarih", keep="last").sort_values("tarih")
+            .reset_index(drop=True))
 
 
-def fire_aylik(d):
-    """Aylık toplamlar ve fire oranları (Excel'deki formüllerle)."""
-    a = d.assign(ay=d["tarih"].dt.to_period("M").dt.to_timestamp()).groupby("ay").sum(
-        numeric_only=True).reset_index()
-    net = a["net_hammadde"].where(a["net_hammadde"] > 0)
-    a["pres_fire"] = (a["net_hammadde"] - a["sepete_giren"]) / net
-    a["fabrika_fire"] = a["arais_kg"] / net
-    a["toplam_hurda_oran"] = a["toplam_hurda"] / net
-    return a
+def fire_ozet(t):
+    """Bir dönemin toplamları ve Excel'deki fire oranları (net kullanılan
+    hammaddeye göre). Toplam kantar hurdasında Excel'deki 'LK/IM' sütun
+    hatası düzeltilmiş olarak talaş da sayılır."""
+    s = t[FIRE_DEGER].sum()
+    net = s["net"] if s["net"] else None
+    s["pres_hurda"] = s["net"] - s["sepete"]
+    s["ps_hurda"] = s["ps_tartim"] + s["iade"] + s["stok"]
+    s["toplam_hurda"] = (s["pres_hurda"] + s["ps_tartim"] + s["iade"] + s["stok"]
+                         + s["numune"] + s["talas"] + s["hassas"])
+    oran = lambda v: v / net if net else None
+    s["pres_fire"] = oran(s["pres_hurda"])
+    s["ps_fire"] = oran(s["ps_hurda"])
+    s["toplam_fire"] = (s["pres_fire"] + s["ps_fire"]) if net else None
+    s["fabrika_fire"] = oran(s["arais"])
+    s["teorik_fire"] = (s["teorik"] - s["sepete"]) / s["teorik"] if s["teorik"] else None
+    s["fark"] = s["toplam_hurda"] - s["arais"]
+    s["gun"] = int(t.loc[t["kayitli"], "tarih"].nunique()) if "kayitli" in t else 0
+    return s
 
 
 # ---------------------------------------------------------------------

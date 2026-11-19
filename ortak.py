@@ -63,3 +63,35 @@ def kaynak_notu(ad, degisme, mod):
     ek = ("klasör 1 dakikada bir kontrol edilir" if mod == "excel"
           else "klasöre giren veri birkaç dakika içinde buraya gelir")
     st.caption(f"📁 Kaynak: **{ad}** · son değişiklik {tarih_saat(degisme)} · {ek}")
+
+
+def donem_sec(ilk_gun, son_gun, varsayilan="Yılbaşından beri"):
+    """Dönem seçimi (hazır dönemler + özel aralık). (başlangıç, bitiş) döner;
+    özel aralıkta bitiş seçilmediyse sayfayı durdurur."""
+    import datetime as dt
+    bugun = son_gun
+    ay_basi = bugun.replace(day=1)
+    gecen_ay_sonu = ay_basi - dt.timedelta(days=1)
+    hazir = {
+        "Bu ay": (ay_basi, bugun),
+        "Geçen ay": (gecen_ay_sonu.replace(day=1), gecen_ay_sonu),
+        "Son 7 gün": (bugun - dt.timedelta(days=6), bugun),
+        "Son 30 gün": (bugun - dt.timedelta(days=29), bugun),
+        "Son 3 ay": ((pd.Timestamp(bugun) - pd.DateOffset(months=3)).date()
+                     + dt.timedelta(days=1), bugun),
+        "Yılbaşından beri": (ilk_gun, bugun),
+        "Özel aralık": None,
+    }
+    f2, f3 = st.columns([1.3, 1.7])
+    secilen = f2.selectbox("Dönem", list(hazir), index=list(hazir).index(varsayilan))
+    if hazir[secilen] is None:
+        secim = f3.date_input("Tarih aralığı", value=(ay_basi, bugun), min_value=ilk_gun,
+                              max_value=bugun, format="DD.MM.YYYY")
+        if not isinstance(secim, (tuple, list)) or len(secim) < 2:
+            st.info("Bitiş tarihini de seçin.")
+            st.stop()
+        return secim[0], secim[1]
+    bas, bit = hazir[secilen]
+    bas = max(bas, ilk_gun)
+    f3.text_input("Tarih aralığı", f"{bas:%d.%m.%Y} – {bit:%d.%m.%Y}", disabled=True)
+    return bas, bit
