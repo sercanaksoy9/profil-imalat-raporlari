@@ -144,7 +144,7 @@ def fark(anahtar, carpan=1.0, ondalik=0, birim=""):
 
 
 st.markdown(f"#### {bas:%d.%m.%Y} – {bit:%d.%m.%Y}  ·  {gun_sayisi} gün"
-            + (f"  ·  {g['uretim_gunu']} üretim günü" if g["uretim_gunu"] else ""))
+            + (f"  ·  {sayi(g['uretim_gunu'])} üretim günü" if g["uretim_gunu"] else ""))
 if kiyas:
     st.caption(f"Oklar bir önceki {gun_sayisi} günle "
                f"({bas - dt.timedelta(days=gun_sayisi):%d.%m} – {bas - dt.timedelta(days=1):%d.%m}) kıyastır.")
