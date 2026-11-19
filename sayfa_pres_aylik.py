@@ -190,10 +190,35 @@ with sekme[1]:
                               "kg/saat": round(o_["kg_saat"]) if o_["kg_saat"] else None,
                               "kg/gün": round(o_["kg_gun"]) if o_["kg_gun"] else None,
                               "Çalışma saati": round(o_["saat"])})
-    st.dataframe(pd.DataFrame(yil_satir), hide_index=True, use_container_width=True,
-                 column_config={c: st.column_config.NumberColumn(format="localized")
-                                for c in ["Toplam (ton)", "Aylık ort. (ton)", "kg/saat",
-                                          "kg/gün", "Çalışma saati"]})
+    yo = pd.DataFrame(yil_satir)
+    yo["ton_yazi"] = yo["Toplam (ton)"].map(lambda v: sayi(v, 1))
+    pres_sira = [pr for pr in ['6"', '8"', "Toplam"] if pr in set(yo["Pres"])]
+    pres_renk = alt.Scale(domain=['6"', '8"', "Toplam"], range=[PALET[0], PALET[1], PALET[2]])
+    temel = alt.Chart(yo).encode(
+        x=alt.X("Yıl:O", title=None,
+                axis=alt.Axis(labelAngle=0, labelPadding=26, labelFontSize=14,
+                              labelFontWeight="bold", ticks=False)),
+        xOffset=alt.XOffset("Pres:N", sort=pres_sira))
+    cubuk = temel.mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4).encode(
+        y=alt.Y("Toplam (ton):Q", title="Ton",
+                axis=alt.Axis(labelExpr="replace(datum.label, ',', '.')")),
+        color=alt.Color("Pres:N", scale=pres_renk, sort=pres_sira, title="Pres",
+                        legend=alt.Legend(orient="top")),
+        tooltip=[alt.Tooltip("Yıl:N"), alt.Tooltip("Pres:N"),
+                 alt.Tooltip("Ay sayısı:Q"),
+                 alt.Tooltip("Toplam (ton):Q", format=",.1f"),
+                 alt.Tooltip("Aylık ort. (ton):Q", format=",.1f"),
+                 alt.Tooltip("kg/saat:Q", format=",.0f"), alt.Tooltip("kg/gün:Q", format=",.0f"),
+                 alt.Tooltip("Çalışma saati:Q", format=",.0f")])
+    # Tonajlar çubukların altında (eksenin hemen altı)
+    yazi = temel.mark_text(baseline="top", dy=6, fontSize=11).encode(
+        y=alt.datum(0), text="ton_yazi:N")
+    st.altair_chart((cubuk + yazi).properties(height=340), use_container_width=True)
+    with st.expander("Ayrıntılı yıllık tablo"):
+        st.dataframe(yo.drop(columns="ton_yazi"), hide_index=True, use_container_width=True,
+                     column_config={c: st.column_config.NumberColumn(format="localized")
+                                    for c in ["Toplam (ton)", "Aylık ort. (ton)", "kg/saat",
+                                              "kg/gün", "Çalışma saati"]})
     st.caption("Yıllar eksik aylarla başlayabilir: 6\" pres Ağustos 2023'ten, 8\" pres "
                "Mayıs 2024'ten itibaren veri var; içinde bulunulan yıl da henüz tamamlanmadı.")
 
