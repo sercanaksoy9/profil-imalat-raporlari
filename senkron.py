@@ -45,7 +45,8 @@ def main(zorla=False):
             continue
         durum = {"kaynak": yol.name, "degisme": round(yol.stat().st_mtime)}
         yeni[anahtar] = durum
-        if zorla or onceki.get(anahtar) != durum:
+        eski = onceki.get(anahtar, {})
+        if zorla or (eski.get("kaynak"), eski.get("degisme")) != (durum["kaynak"], durum["degisme"]):
             tablo = raporlar.oku(anahtar, yol)
             hedef = raporlar.bulut_dosyasi(anahtar)
             hedef.parent.mkdir(exist_ok=True)
