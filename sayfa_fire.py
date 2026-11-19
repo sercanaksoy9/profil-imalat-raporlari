@@ -52,15 +52,22 @@ if not o["kayitli"].any():
     st.stop()
 
 gun_sayisi = (bit - bas).days + 1
-onceki = sec(bas - dt.timedelta(days=gun_sayisi), bas - dt.timedelta(days=1))
+onceki = sec(bas - dt.timedelta(days=30), bas - dt.timedelta(days=1))
 g = fire_ozet(o)
 p = fire_ozet(onceki) if onceki["kayitli"].any() else None
 
 
+ORAN_ANAHTAR = {"toplam_fire", "pres_fire", "ps_fire", "fabrika_fire"}
+KIYAS_GUN = 30
+
+
 def fark(anahtar, carpan=1.0, ondalik=0, birim=""):
+    """Önceki 30 günle fark. Oranlar doğrudan; miktarlar 30 günün günlük
+    ortalaması seçili gün sayısına ölçeklenerek kıyaslanır."""
     if p is None or p[anahtar] is None or g[anahtar] is None:
         return None
-    return f"{sayi((g[anahtar] - p[anahtar]) * carpan, ondalik)}{birim}"
+    taban = p[anahtar] if anahtar in ORAN_ANAHTAR else p[anahtar] * gun_sayisi / KIYAS_GUN
+    return f"{sayi((g[anahtar] - taban) * carpan, ondalik)}{birim}"
 
 
 def yuzde(v):
@@ -70,8 +77,10 @@ def yuzde(v):
 st.markdown(f"#### {bas:%d.%m.%Y} – {bit:%d.%m.%Y}  ·  {gun_sayisi} gün  ·  "
             f"{sayi(g['gun'])} kayıtlı gün")
 if p is not None:
-    st.caption(f"Oklar bir önceki {gun_sayisi} günle "
-               f"({bas - dt.timedelta(days=gun_sayisi):%d.%m} – {bas - dt.timedelta(days=1):%d.%m}) kıyastır.")
+    st.caption(f"Oklar seçili dönemden önceki 30 günle "
+               f"({bas - dt.timedelta(days=KIYAS_GUN):%d.%m} – {bas - dt.timedelta(days=1):%d.%m}) kıyastır. "
+               "Oranlar doğrudan, miktarlar 30 günün günlük ortalamasıyla "
+               f"({gun_sayisi} güne ölçeklenerek) karşılaştırılır.")
 
 k = st.columns(4)
 k[0].metric("Toplam Fire (%)", yuzde(g["toplam_fire"]), fark("toplam_fire", 100, 1, " puan"),

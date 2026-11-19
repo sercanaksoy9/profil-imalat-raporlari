@@ -109,25 +109,34 @@ if not aylik_kisim.empty:
             "sayfasındaki **ay toplamıyla** rapora eklendi; aralık bu aylara kısmen "
             "girse de tam ay sayılır.")
 
-# Önceki eşit uzunluktaki dönemle kıyas (yalnız ikisi de günlük kayıttan geliyorsa)
+# Seçili dönemden önceki 30 günle kıyas (yalnız ikisi de günlük kayıttan geliyorsa)
 gun_sayisi = (bit - bas).days + 1
-onceki = aralik_sec(bas - dt.timedelta(days=gun_sayisi), bas - dt.timedelta(days=1), presler)
+onceki = aralik_sec(bas - dt.timedelta(days=30), bas - dt.timedelta(days=1), presler)
 kiyas = (not onceki.empty and (onceki["tur"] == "gün").all() and (o["tur"] == "gün").all())
 g = ozetle(o)
 p = ozetle(onceki) if kiyas else None
 
 
+ORAN_ANAHTAR = {"fire", "kg_saat"}
+KIYAS_GUN = 30
+
+
 def fark(anahtar, carpan=1.0, ondalik=0, birim=""):
+    """Önceki 30 günle fark. Oranlar doğrudan; miktarlar 30 günün günlük
+    ortalaması seçili gün sayısına ölçeklenerek kıyaslanır."""
     if p is None or p[anahtar] is None or g[anahtar] is None:
         return None
-    return f"{sayi((g[anahtar] - p[anahtar]) * carpan, ondalik)}{birim}"
+    taban = p[anahtar] if anahtar in ORAN_ANAHTAR else p[anahtar] * gun_sayisi / KIYAS_GUN
+    return f"{sayi((g[anahtar] - taban) * carpan, ondalik)}{birim}"
 
 
 st.markdown(f"#### {bas:%d.%m.%Y} – {bit:%d.%m.%Y}  ·  {gun_sayisi} gün"
             + (f"  ·  {sayi(g['uretim_gunu'])} üretim günü" if g["uretim_gunu"] else ""))
 if kiyas:
-    st.caption(f"Oklar bir önceki {gun_sayisi} günle "
-               f"({bas - dt.timedelta(days=gun_sayisi):%d.%m} – {bas - dt.timedelta(days=1):%d.%m}) kıyastır.")
+    st.caption(f"Oklar seçili dönemden önceki 30 günle "
+               f"({bas - dt.timedelta(days=KIYAS_GUN):%d.%m} – {bas - dt.timedelta(days=1):%d.%m}) kıyastır. "
+               "Oranlar doğrudan, miktarlar 30 günün günlük ortalamasıyla "
+               f"({gun_sayisi} güne ölçeklenerek) karşılaştırılır.")
 
 # Birimler başlıkta: dar ekranda sayı kesilmesin
 k = st.columns(4)
