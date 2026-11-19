@@ -52,6 +52,18 @@ h4 { color: #e4eaf4 !important; font-weight: 700 !important; }
 [data-testid="stMetricLabel"] p { text-transform: uppercase; letter-spacing: .07em;
   font-size: .72rem !important; font-weight: 600; color: #8b9bb8 !important; }
 [data-testid="stMetricValue"] { color: #ffffff; font-size: 2rem !important; line-height: 1.15; }
+/* Orta genişlikte (4 kart yan yana sığmayınca) rakamlar kesilmesin */
+@media (max-width: 1150px) {
+  [data-testid="stMetric"] { padding: 10px 10px 8px 12px; }
+  [data-testid="stMetricValue"] { font-size: 1.45rem !important; }
+  [data-testid="stMetricLabel"] p { font-size: .62rem !important; letter-spacing: .04em; }
+  [data-testid="stMetricLabel"], [data-testid="stMetricLabel"] * {
+    white-space: normal !important; overflow: visible !important; text-overflow: clip !important; }
+}
+@media (max-width: 640px) {
+  [data-testid="stMetricValue"] { font-size: 1.8rem !important; }
+  [data-testid="stMetricLabel"] p { font-size: .7rem !important; }
+}
 
 /* Grafik ve tablo kartları */
 [data-testid="stVegaLiteChart"] { background: #121b2d; border: 1px solid #22304a;
