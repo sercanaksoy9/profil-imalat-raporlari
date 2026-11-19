@@ -125,7 +125,12 @@ def rapor_verisi(anahtar):
     yol = raporlar.kaynak_dosyasi(anahtar)
     if yol is not None:
         degisme = yol.stat().st_mtime
-        return _excelden(anahtar, str(yol), degisme), yol.name, degisme, "excel"
+        try:
+            return _excelden(anahtar, str(yol), degisme), yol.name, degisme, "excel"
+        except PermissionError:
+            # Excel'de açık olan dosya kilitli olabilir: son senkron özeti kullanılır
+            st.caption(f"⚠️ {yol.name} şu an başka bir programda açık; son senkron "
+                       "özeti gösteriliyor.")
     bulut = raporlar.bulut_dosyasi(anahtar)
     if bulut.exists():
         bilgi = veri.bulut_bilgisi().get("raporlar", {}).get(anahtar, {})

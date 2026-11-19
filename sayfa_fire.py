@@ -16,7 +16,7 @@ import pandas as pd
 import streamlit as st
 
 from ortak import PALET, TEK_RENK, ay_etiketi, donem_sec, kaynak_notu, rapor_verisi, sayi
-from raporlar import fire_ozet
+from raporlar import FIRE_BASLANGIC, fire_ozet
 
 ORAN_ADI = {"pres_fire": "Pres firesi", "ps_fire": "Pres sonrası fire",
             "toplam_fire": "Toplam fire", "fabrika_fire": "Fabrika fire (araiş)"}
@@ -34,6 +34,10 @@ if veri_ is None or veri_[0].empty:
     st.stop()
 gunluk, kaynak_adi, degisme, mod = veri_
 kaynak_notu(kaynak_adi, degisme, mod)
+# Eski rapora ait aylar (Haziran 2026 öncesi) gösterilmez; bulut özeti
+# eskiyse de burada ayıklanır
+gunluk = gunluk[gunluk["tarih"] >= FIRE_BASLANGIC].reset_index(drop=True)
+st.caption(f"Rapor {FIRE_BASLANGIC:%d.%m.%Y} tarihinden itibaren tutulan verileri kapsar.")
 
 kayitli = gunluk[gunluk["kayitli"]]
 ilk_gun = gunluk["tarih"].min().date()

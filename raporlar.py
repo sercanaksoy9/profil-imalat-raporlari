@@ -244,6 +244,9 @@ FIRE_SUTUN = {
     "arais tartim (kantara gore)": "arais_kantar",
 }
 FIRE_DEGER = [c for c in FIRE_SUTUN.values() if c != "sayim"]
+# Fire listesi bu tarihten itibaren bizim; önceki ay sayfaları (Ocak–Mayıs
+# 2026, Excel'de gizli) eski rapora ait, rapora alınmaz.
+FIRE_BASLANGIC = pd.Timestamp(2026, 6, 1)
 
 
 @rapor("fire", ("fire listesi",))
@@ -267,6 +270,7 @@ def fire_gunluk(yol):
     if not parcalar:
         return pd.DataFrame(columns=["tarih"] + list(FIRE_SUTUN.values()))
     d = pd.concat(parcalar, ignore_index=True)
+    d = d[d["tarih"] >= FIRE_BASLANGIC]
     for c in FIRE_SUTUN.values():
         if c not in d.columns:
             d[c] = float("nan")
