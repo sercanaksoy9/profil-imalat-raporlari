@@ -2,17 +2,17 @@
  "raporlar": {
   "pres_rapor_ozet": {
    "kaynak": "2026 PRES ÜRETİM RAPORU.REV..xlsx",
-   "degisme": 1795171613,
+   "degisme": 1795171884,
    "kayit": 22
   },
   "pres_rapor_gunluk": {
    "kaynak": "2026 PRES ÜRETİM RAPORU.REV..xlsx",
-   "degisme": 1795171613,
+   "degisme": 1795171884,
    "kayit": 192
   },
   "fire": {
    "kaynak": "Toplam Fire Listesi 2026_rev..xlsx",
-   "degisme": 1795171720,
+   "degisme": 1795171855,
    "kayit": 183
   },
   "uretim_aylik": {
@@ -31,5 +31,5 @@
    "kayit": 91
   }
  },
- "olusturma": "2026-11-20T13:49:48"
+ "olusturma": "2026-11-20T14:04:44"
 }
