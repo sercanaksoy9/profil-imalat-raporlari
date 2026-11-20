@@ -2,17 +2,17 @@
  "raporlar": {
   "pres_rapor_ozet": {
    "kaynak": "2026 PRES ÜRETİM RAPORU.REV..xlsx",
-   "degisme": 1795093806,
+   "degisme": 1795171613,
    "kayit": 22
   },
   "pres_rapor_gunluk": {
    "kaynak": "2026 PRES ÜRETİM RAPORU.REV..xlsx",
-   "degisme": 1795093806,
-   "kayit": 191
+   "degisme": 1795171613,
+   "kayit": 192
   },
   "fire": {
    "kaynak": "Toplam Fire Listesi 2026_rev..xlsx",
-   "degisme": 1795093854,
+   "degisme": 1795171720,
    "kayit": 183
   },
   "uretim_aylik": {
@@ -24,6 +24,12 @@
    "kaynak": "ENERJİ SARFİYATLAR 2026_Rev.xlsx",
    "degisme": 1794381436,
    "kayit": 10
+  },
+  "tozboya_aylik": {
+   "kaynak": "ALBOND TOZ BOYA ÜRETİMERİ AYLIK 2025-2026.xls",
+   "degisme": 1794229375,
+   "kayit": 91
   }
- }
+ },
+ "olusturma": "2026-11-20T13:49:48"
 }
