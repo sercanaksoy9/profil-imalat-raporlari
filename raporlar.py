@@ -35,7 +35,7 @@ def _ay_no(metin):
 # anahtar: (dosya adında olması gereken kelimeler, olmaması gerekenler, okuyucu)
 RAPORLAR = {}
 # Ekranda olan ve buluta gönderilen raporlar (yeni başlık eklenince buraya)
-AKTIF_RAPORLAR = ["pres_rapor_ozet", "pres_rapor_gunluk", "fire", "uretim_aylik", "enerji"]
+AKTIF_RAPORLAR = ["pres_rapor_ozet", "pres_rapor_gunluk", "fire", "uretim_aylik", "enerji", "tozboya_aylik"]
 
 
 def rapor(anahtar, kelimeler, haric=()):
