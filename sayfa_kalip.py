@@ -25,6 +25,12 @@ kayit, kaynak_adi, degisme, mod = veri_
 kaynak_notu(kaynak_adi, degisme, mod)
 kayit = kayit[kayit["kalip"].notna()].copy()
 kayit["kalip"] = kayit["kalip"].astype(int)
+# Müşteri adı yazım farkları birleştirilir (E-SYSTEM / E SYSTEM / ESYSTEM):
+# boşluk ve noktalama atılınca aynı olanlar en sık yazılışla gösterilir
+_anahtar = kayit["musteri"].str.replace(r"[^0-9A-ZÇĞİÖŞÜ]", "", regex=True)
+_ad = (pd.DataFrame({"a": _anahtar, "m": kayit["musteri"]}).dropna()
+       .groupby("a")["m"].agg(lambda s: s.value_counts().index[0]))
+kayit["musteri"] = _anahtar.map(_ad).astype("string")
 
 
 def ozetle(t):
@@ -63,15 +69,20 @@ def kalip_tablosu(t):
 # ---------------------------------------------------------------------
 # Filtreler: pres + tarih aralığı + kalıp
 # ---------------------------------------------------------------------
-f1, f_donem = st.columns([1, 3])
+f1, f2, f_donem = st.columns([1, 1.6, 3])
 presler = f1.multiselect("Pres", ['6"', '8"'], default=['6"', '8"'])
+musteriler = f2.multiselect(
+    "Müşteri", kayit.groupby("musteri")["net_kg"].sum().sort_values(ascending=False).index.tolist(),
+    placeholder="Tümü")
 with f_donem:
     bas, bit = donem_sec(kayit["tarih"].min().date(), kayit["tarih"].max().date())
 
 kayit = kayit[kayit["pres"].isin(presler)]
+if musteriler:
+    kayit = kayit[kayit["musteri"].isin(musteriler)]
 o = kayit[(kayit["tarih"].dt.date >= bas) & (kayit["tarih"].dt.date <= bit)]
 if o.empty:
-    st.warning("Seçilen pres ve tarih aralığında baskı kaydı yok.")
+    st.warning("Seçilen pres, müşteri ve tarih aralığında baskı kaydı yok.")
     st.stop()
 liste = kalip_tablosu(o)
 
