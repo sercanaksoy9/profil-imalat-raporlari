@@ -65,8 +65,22 @@ _GRUP = {_anahtar(v): ad for ad, liste in GRUPLAR.items() for v in [ad, *liste]}
 
 def birlestir(seri):
     """Müşteri sütununu birleşik adlarla döndürür. Tabloda olmayanlar en sık
-    yazılışlarıyla (sondaki numara atılmış) gösterilir."""
+    yazılışlarıyla (sondaki numara atılmış) gösterilir. '/' ile yazılmış
+    ortak kayıtlar (ASC/ BG PLAST) parça parça birleştirilip 'ASC / BG PLAST'
+    olarak döner; filtrede her iki müşteride de görünür (bkz. ayir)."""
     seri = seri.astype("string")
+    parca = seri.str.split("/").explode().str.strip().replace("", pd.NA)
+    ad = _birlestir_tek(parca)
+    return (ad.dropna().groupby(level=0).agg(lambda s: " / ".join(dict.fromkeys(s)))
+            .reindex(seri.index).astype("string"))
+
+
+def ayir(ad):
+    """Birleşik addaki müşteriler: 'ASC / BG PLAST' → ['ASC', 'BG PLAST']."""
+    return [] if pd.isna(ad) else str(ad).split(" / ")
+
+
+def _birlestir_tek(seri):
     anahtar = seri.map(lambda v: _anahtar(v) if pd.notna(v) else pd.NA).astype("string")
     sade = seri.map(lambda v: _sade(v) if pd.notna(v) else pd.NA)
     en_sik = (pd.DataFrame({"a": anahtar, "m": sade}).dropna()
