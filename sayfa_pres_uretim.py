@@ -201,19 +201,19 @@ with sekme[0]:
             alt.Chart(d).mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4,
                                   stroke="#121b2d", strokeWidth=2)
             .encode(x=x, y=alt.Y("testere_ton:Q", title="Ton", stack=True), color=renk,
-                    tooltip=ipucu).properties(height=280), use_container_width=True)
+                    tooltip=ipucu).properties(height=280), width="stretch")
         sol, sag = st.columns(2)
         cizgi = alt.Chart(d).mark_line(strokeWidth=2, point=alt.OverlayMarkDef(size=60))
         with sol:
             st.subheader("Fire %")
             st.altair_chart(cizgi.encode(x=x, y=alt.Y("fire_yuzde:Q", title="Fire %"),
                                          color=renk, tooltip=ipucu).properties(height=250),
-                            use_container_width=True)
+                            width="stretch")
         with sag:
             st.subheader("Saatlik üretim (kg/saat)")
             st.altair_chart(cizgi.encode(x=x, y=alt.Y("kg_saat:Q", title="kg/saat"),
                                          color=renk, tooltip=ipucu).properties(height=250),
-                            use_container_width=True)
+                            width="stretch")
 
 # ---------------------------------------------------------------------
 # Pres karşılaştırma
@@ -246,7 +246,7 @@ with sekme[1]:
     st.dataframe(pd.DataFrame({ad: [f(s) for f in [fn for _, fn in satir_adi]]
                                for ad, s in satirlar.items()},
                               index=[a for a, _ in satir_adi]),
-                 use_container_width=True, height=36 * len(satir_adi) + 40)
+                 width="stretch", height=36 * len(satir_adi) + 40)
     if len(satirlar) > 1:
         pay = pd.DataFrame({"pres": [p_ for p_ in satirlar if p_ != "Toplam"],
                             "ton": [satirlar[p_]["testere"] / 1000 for p_ in satirlar if p_ != "Toplam"]})
@@ -260,7 +260,7 @@ with sekme[1]:
                     tooltip=[alt.Tooltip("pres:N", title="Pres"),
                              alt.Tooltip("ton:Q", title="Ton", format=",.1f"),
                              alt.Tooltip("oran:Q", title="Pay %", format=".1f")])
-            .properties(height=70), use_container_width=True)
+            .properties(height=70), width="stretch")
 
 # ---------------------------------------------------------------------
 # Duruşlar
@@ -289,10 +289,10 @@ with sekme[2]:
                         tooltip=[alt.Tooltip("tip_adi:N", title="Tip"),
                                  alt.Tooltip("saat:Q", title="Saat", format=",.1f"),
                                  alt.Tooltip("oran:Q", title="Pay %", format=".1f")])
-                .properties(height=40 * len(toplam) + 30), use_container_width=True)
+                .properties(height=40 * len(toplam) + 30), width="stretch")
             st.dataframe(pd.DataFrame({
                 "Tip": toplam["tip_adi"], "Saat": toplam["saat"].round(1),
-                "Pay %": toplam["oran"].round(1)}), hide_index=True, use_container_width=True)
+                "Pay %": toplam["oran"].round(1)}), hide_index=True, width="stretch")
         with sag:
             gunlu_durus = gun_sayisi <= 62 and (durus["tarih"].isin(o.loc[o["tur"] == "gün", "tarih"])).any()
             durus["etiket"] = (durus["tarih"].dt.strftime("%d.%m") if gunlu_durus and (o["tur"] == "gün").all()
@@ -310,11 +310,11 @@ with sekme[2]:
                         tooltip=[alt.Tooltip("etiket:N", title="Dönem"),
                                  alt.Tooltip("tip_adi:N", title="Tip"),
                                  alt.Tooltip("sum(saat):Q", title="Saat", format=",.1f")])
-                .properties(height=300), use_container_width=True)
+                .properties(height=300), width="stretch")
         pres_durus = durus.pivot_table(index="pres", columns="tip_adi", values="saat",
                                        aggfunc="sum", fill_value=0).round(1)
         st.subheader("Pres × duruş tipi (saat)")
-        st.dataframe(pres_durus, use_container_width=True)
+        st.dataframe(pres_durus, width="stretch")
 
 # ---------------------------------------------------------------------
 # Gün analizi (yalnız günlük kayıtlar)
@@ -336,20 +336,20 @@ with sekme[3]:
         sol, sag = st.columns(2)
         with sol:
             st.subheader("🏆 En yüksek üretim günleri")
-            st.dataframe(goster(gd.nlargest(5, "testere")), hide_index=True, use_container_width=True)
+            st.dataframe(goster(gd.nlargest(5, "testere")), hide_index=True, width="stretch")
             st.subheader("⚡ En yüksek saatlik üretim")
             st.dataframe(goster(gd[gd["net_saat"] >= 4].nlargest(5, "kg_saat")),
-                         hide_index=True, use_container_width=True)
+                         hide_index=True, width="stretch")
         with sag:
             st.subheader("⚠️ En yüksek fire günleri")
             st.dataframe(goster(gd[gd["hammadde"] >= 1000].nlargest(5, "fire_yuzde")),
-                         hide_index=True, use_container_width=True)
+                         hide_index=True, width="stretch")
             st.subheader("⏸ En çok duruş olan günler")
             dd = gd[gd["durus_dk"] > 0].nlargest(5, "durus_dk")
             if dd.empty:
                 st.success("Duruş olan gün yok.")
             else:
-                st.dataframe(goster(dd), hide_index=True, use_container_width=True)
+                st.dataframe(goster(dd), hide_index=True, width="stretch")
         st.caption("Saatlik üretim sıralamasında en az 4 saat net çalışılan, fire "
                    "sıralamasında en az 1 ton hammadde girilen günler dikkate alınır.")
         st.subheader("Haftanın günlerine göre ortalama")
@@ -364,7 +364,7 @@ with sekme[3]:
                     tooltip=[alt.Tooltip("gun_adi:N", title="Gün"), alt.Tooltip("pres:N", title="Pres"),
                              alt.Tooltip("testere:Q", title="Ort. testere kg", format=",.0f"),
                              alt.Tooltip("gun:Q", title="Gün sayısı")])
-            .properties(height=260), use_container_width=True)
+            .properties(height=260), width="stretch")
 
 # ---------------------------------------------------------------------
 # Detay tablo
@@ -388,7 +388,7 @@ with sekme[4]:
     })
     bos = [c for c in cikti.columns if c.endswith("(dk)") and c != "Duruş (dk)" and (cikti[c] == 0).all()]
     cikti = cikti.drop(columns=bos)
-    st.dataframe(cikti, hide_index=True, use_container_width=True)
+    st.dataframe(cikti, hide_index=True, width="stretch")
     st.download_button("⬇️ CSV indir", cikti.to_csv(index=False, sep=";", decimal=",")
                        .encode("utf-8-sig"),
                        file_name=f"pres_uretim_{bas:%Y%m%d}_{bit:%Y%m%d}.csv", mime="text/csv")

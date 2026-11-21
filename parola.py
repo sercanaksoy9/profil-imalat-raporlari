@@ -30,7 +30,7 @@ def parola_kontrol(uygulama_adi):
         st.caption("Devam etmek için şifreyi girin.")
         with st.form("parola_formu", clear_on_submit=True):
             girilen = st.text_input("Şifre", type="password")
-            gonder = st.form_submit_button("Giriş", use_container_width=True)
+            gonder = st.form_submit_button("Giriş", width="stretch")
         if gonder:
             if hmac.compare_digest(girilen.encode(), parola.encode()):
                 st.session_state["_parola_ok"] = True

@@ -122,12 +122,12 @@ with sekme[0]:
         st.subheader("Ton başına elektrik (kWh/ton)")
         ad = ['6"', '8"']
         st.altair_chart(cizgi(uzun(["p6_kwh_ton", "p8_kwh_ton"], ad), "kWh/ton", PALET[:2], ad),
-                        use_container_width=True)
+                        width="stretch")
     with sag:
         st.subheader("Ton başına doğalgaz (m³/ton)")
         ad = ['6"', '8"', "Termik"]
         st.altair_chart(cizgi(uzun(["p6_gaz_ton", "p8_gaz_ton", "termik_gaz_ton"], ad), "m³/ton",
-                              [PALET[0], PALET[1], PALET[3]], ad), use_container_width=True)
+                              [PALET[0], PALET[1], PALET[3]], ad), width="stretch")
     st.caption("6\" ve 8\" oranları her presin kullandığı hammaddeye, termik oranı toplam pres "
                "üretimine göredir (Excel'deki gibi).")
     st.subheader("Dönem özeti")
@@ -139,7 +139,7 @@ with sekme[0]:
             "Doğalgaz (m³)": sayi(g[f"{on}_gaz"]), "m³/ton": sayi(g[f"{on}_gaz_ton"], 1),
             "Kompresör (kWh)": sayi(g[f"{on}_komp_kwh"]),
             "Kompresör saati": sayi(g[f"{on}_komp_saat"], 1)})
-    st.dataframe(pd.DataFrame(satirlar), hide_index=True, use_container_width=True)
+    st.dataframe(pd.DataFrame(satirlar), hide_index=True, width="stretch")
     st.caption("Kompresör tüketimi Excel'de çalışma saati × sabit güçle hesaplanır "
                "(6\" için 10 kW, 8\" için 16 kW).")
 
@@ -153,19 +153,19 @@ with sekme[1]:
     u = uzun(["prese_ait_kwh", "boya_kwh", "diger_kwh"], ad)
     u["deger"] = u["deger"] / 1000
     st.altair_chart(yigin(u, "MWh", [PALET[0], PALET[4], "#4f5a70"], ad, ",.1f"),
-                    use_container_width=True)
+                    width="stretch")
     sol, sag = st.columns(2)
     with sol:
         st.subheader("Pres hattının payı (%)")
         u = uzun(["pres_elk_pay", "boya_elk_pay"], ["Pres hattı", "Boyahane"])
         u["deger"] = u["deger"] * 100
         st.altair_chart(cizgi(u, "%", [PALET[0], PALET[4]], ["Pres hattı", "Boyahane"]),
-                        use_container_width=True)
+                        width="stretch")
     with sag:
         st.subheader("Ortalama elektrik fiyatı (TL/kWh)")
         ad = ["TL/kWh"]
         st.altair_chart(cizgi(uzun(["elk_birim"], ad), "TL/kWh", [PALET[2]], ad, ",.2f"),
-                        use_container_width=True)
+                        width="stretch")
     st.caption("Pres hattı = ana pano − kompresör ana hat (12.000 kWh sabit) + preslerin kompresör "
                "tüketimi. Fiyat = fabrika faturası (KDV hariç) ÷ fabrika tüketimi.")
 
@@ -180,19 +180,19 @@ with sekme[2]:
     u = uzun(["p6_gaz", "p8_gaz", "termik_gaz", "boya_gaz", "diger_gaz"], ad)
     u["deger"] = u["deger"] / 1000
     st.altair_chart(yigin(u, "bin m³", [PALET[0], PALET[1], PALET[3], PALET[4], "#4f5a70"], ad,
-                          ",.1f"), use_container_width=True)
+                          ",.1f"), width="stretch")
     sol, sag = st.columns(2)
     with sol:
         st.subheader("Profil imalatı payı (%)")
         u = uzun(["pres_gaz_pay", "boya_gaz_pay"], ["Presler + termik", "Boyahane"])
         u["deger"] = u["deger"] * 100
         st.altair_chart(cizgi(u, "%", [PALET[0], PALET[4]], ["Presler + termik", "Boyahane"]),
-                        use_container_width=True)
+                        width="stretch")
     with sag:
         st.subheader("Doğalgaz fiyatı (TL/m³)")
         ad = ["TL/m³"]
         st.altair_chart(cizgi(uzun(["gaz_birim"], ad), "TL/m³", [PALET[2]], ad, ",.2f"),
-                        use_container_width=True)
+                        width="stretch")
 
 # ---------------------------------------------------------------------
 # Maliyet ($/ton)
@@ -203,17 +203,17 @@ with sekme[3]:
     with sol:
         st.subheader("Presler enerji maliyeti ($/ton)")
         st.altair_chart(yigin(uzun(["pres_elk_usd_ton", "pres_gaz_usd_ton"], ad), "$/ton",
-                              [PALET[0], PALET[1]], ad, ",.1f"), use_container_width=True)
+                              [PALET[0], PALET[1]], ad, ",.1f"), width="stretch")
     with sag:
         st.subheader("Boyahane enerji maliyeti ($/ton)")
         st.altair_chart(yigin(uzun(["boya_elk_usd_ton", "boya_gaz_usd_ton"], ad), "$/ton",
-                              [PALET[0], PALET[1]], ad, ",.1f"), use_container_width=True)
+                              [PALET[0], PALET[1]], ad, ",.1f"), width="stretch")
     sol, sag = st.columns(2)
     with sol:
         st.subheader("Boyahane ton başına tüketim")
         ad2 = ["Elektrik (kWh/ton)", "Doğalgaz (m³/ton)"]
         st.altair_chart(cizgi(uzun(["boya_kwh_ton", "boya_gaz_ton"], ad2), "Birim/ton",
-                              [PALET[0], PALET[1]], ad2), use_container_width=True)
+                              [PALET[0], PALET[1]], ad2), width="stretch")
     with sag:
         st.subheader("Dönem toplamı (TL)")
         st.dataframe(pd.DataFrame({
@@ -221,7 +221,7 @@ with sekme[3]:
                       "Boyahane doğalgaz"],
             "TL": [sayi(g[c]) for c in ("pres_elk_tl", "pres_gaz_tl", "boya_elk_tl", "boya_gaz_tl")],
             "$": [sayi(g[c]) for c in ("pres_elk_usd", "pres_gaz_usd", "boya_elk_usd", "boya_gaz_usd")],
-        }), hide_index=True, use_container_width=True)
+        }), hide_index=True, width="stretch")
     st.caption("Bölüm maliyeti = bölüm tüketimi × o ayın fabrika ortalama birim fiyatı; $ için "
                "TOPLAM sayfasındaki aylık dolar kuru kullanılır.")
 
@@ -256,7 +256,7 @@ with sekme[4]:
                                                            if g.get("fab_elk_usd") else None), o)
                           for _, c, o in kalemler]
     tablo = pd.DataFrame(tablo)
-    st.dataframe(tablo, hide_index=True, use_container_width=True, height=36 * len(kalemler) + 40)
+    st.dataframe(tablo, hide_index=True, width="stretch", height=36 * len(kalemler) + 40)
     st.caption("'Dönem' sütununda miktarlar toplam, oranlar dönem toplamlarından hesaplanır; "
                "dolar kuru faturaya göre ağırlıklı ortalamadır.")
     st.download_button("⬇️ CSV indir", tablo.to_csv(index=False, sep=";").encode("utf-8-sig"),

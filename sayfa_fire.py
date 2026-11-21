@@ -143,7 +143,7 @@ with sekme[0]:
                 color=alt.Color("ad:N", scale=ORAN_RENK, title=None, legend=alt.Legend(orient="top")),
                 tooltip=[alt.Tooltip("etiket:N", title="Dönem"), alt.Tooltip("ad:N", title="Oran"),
                          alt.Tooltip("deger:Q", title="%", format=".1f")])
-        .properties(height=300), use_container_width=True)
+        .properties(height=300), width="stretch")
 
     miktar = d.melt(id_vars=["donem", "etiket"], value_vars=["net", "sepete"],
                     var_name="tur", value_name="kg")
@@ -159,7 +159,7 @@ with sekme[0]:
                                                 range=[PALET[0], PALET[2]])),
                 tooltip=[alt.Tooltip("etiket:N", title="Dönem"), alt.Tooltip("ad:N", title="Kalem"),
                          alt.Tooltip("ton:Q", title="Ton", format=",.1f")])
-        .properties(height=280), use_container_width=True)
+        .properties(height=280), width="stretch")
 
 # ---------------------------------------------------------------------
 # Fire dağılımı (Excel'deki alt bloktaki gibi)
@@ -182,14 +182,14 @@ with sekme[1]:
                              alt.Tooltip("kg:Q", title="kg", format=",.0f"),
                              alt.Tooltip("oran:Q", title="Net hammaddeye oranı %", format=".2f"),
                              alt.Tooltip("pay:Q", title="Hurda içindeki pay %", format=".1f")])
-            .properties(height=42 * max(len(goster), 1) + 30), use_container_width=True)
+            .properties(height=42 * max(len(goster), 1) + 30), width="stretch")
     with sag:
         st.subheader("Oranlar")
         st.dataframe(pd.DataFrame({
             "Kalem": dag["kalem"], "kg": dag["kg"].map(sayi),
             "Net hammaddeye %": dag["oran"].map(lambda v: sayi(v, 2)),
             "Hurda içinde pay %": dag["pay"].map(lambda v: sayi(v, 1)),
-        }), hide_index=True, use_container_width=True)
+        }), hide_index=True, width="stretch")
         st.metric("Toplam kantar hurdası (ton)", sayi(g["toplam_hurda"] / 1000, 1),
                   help="Pres hurdası + pres sonrası + iade + stok + numune + talaş + hassas kesim")
     st.caption("Excel'de 'İşlem firesi (hassas kesim + talaş)' satırı yalnız talaşı alıyor; "
@@ -228,7 +228,7 @@ with sekme[2]:
                                 scale=alt.Scale(domain=list(adlar.values()), range=PALET[1:4])),
                 tooltip=[alt.Tooltip("etiket:N", title="Ay"), alt.Tooltip("ad:N", title="Kalem"),
                          alt.Tooltip("ton:Q", title="Ton", format=",.1f")])
-        .properties(height=300), use_container_width=True)
+        .properties(height=300), width="stretch")
     st.caption("Kantar sütunları (araiş tartım, kantara göre net kullanılan hammadde) "
                "Temmuz 2026'dan itibaren dosyada var.")
 
@@ -255,7 +255,7 @@ with sekme[3]:
         "Fabrika Fire %": [round(v * 100, 1) if v is not None else None
                            for v in list(satir["fabrika_fire"]) + [toplam["fabrika_fire"]]],
     })
-    st.dataframe(tablo, hide_index=True, use_container_width=True,
+    st.dataframe(tablo, hide_index=True, width="stretch",
                  column_config={c: st.column_config.NumberColumn(format="localized")
                                 for c in tablo.columns if c != "Ay"})
     st.caption("Ay kısmen seçiliyse o ayın yalnız seçili günleri toplanır. TOPLAM satırındaki "
@@ -280,7 +280,7 @@ with sekme[4]:
     })
     bos = [c for c in cikti.columns[1:] if pd.to_numeric(cikti[c], errors="coerce").fillna(0).eq(0).all()]
     cikti = cikti.drop(columns=bos)
-    st.dataframe(cikti, hide_index=True, use_container_width=True)
+    st.dataframe(cikti, hide_index=True, width="stretch")
     if bos:
         st.caption("Seçilen aralıkta hiç değeri olmayan sütunlar gizlendi: " + ", ".join(bos))
     st.download_button("⬇️ CSV indir", cikti.to_csv(index=False, sep=";", decimal=",")
