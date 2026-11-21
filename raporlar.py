@@ -35,7 +35,8 @@ def _ay_no(metin):
 # anahtar: (dosya adında olması gereken kelimeler, olmaması gerekenler, okuyucu)
 RAPORLAR = {}
 # Ekranda olan ve buluta gönderilen raporlar (yeni başlık eklenince buraya)
-AKTIF_RAPORLAR = ["pres_rapor_ozet", "pres_rapor_gunluk", "fire", "uretim_aylik", "enerji", "tozboya_aylik"]
+AKTIF_RAPORLAR = ["pres_rapor_ozet", "pres_rapor_gunluk", "fire", "uretim_aylik", "enerji", "tozboya_aylik",
+                  "kalip_kayitlari"]
 
 
 def rapor(anahtar, kelimeler, haric=()):
@@ -449,6 +450,15 @@ def enerji_ozet(t):
         e, g = s[f"{bolum}_elk_usd_ton"], s[f"{bolum}_gaz_usd_ton"]
         s[f"{bolum}_enerji_usd_ton"] = None if e is None and g is None else (e or 0) + (g or 0)
     return s
+
+
+# ---------------------------------------------------------------------
+# Kalıp bazlı baskı kayıtları: pres DASHBOARD dosyasının 'Temiz veri'
+# sayfası (her satır bir baskı: kalıp no, piston hızı, brüt/net kg, süre)
+# ---------------------------------------------------------------------
+@rapor("kalip_kayitlari", ("dashboard",), haric=("enerji", "sarfiyat"))
+def kalip_kayitlari(yol):
+    return veri.pres_kayitlari(yol).drop(columns=["hafta"], errors="ignore")
 
 
 # ---------------------------------------------------------------------

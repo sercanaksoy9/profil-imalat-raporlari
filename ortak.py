@@ -160,9 +160,12 @@ def donem_sec(ilk_gun, son_gun, varsayilan="Yılbaşından beri"):
         "Son 30 gün": (bugun - dt.timedelta(days=29), bugun),
         "Son 3 ay": ((pd.Timestamp(bugun) - pd.DateOffset(months=3)).date()
                      + dt.timedelta(days=1), bugun),
-        "Yılbaşından beri": (ilk_gun, bugun),
+        "Yılbaşından beri": (max(ilk_gun, bugun.replace(month=1, day=1)), bugun),
         "Özel aralık": None,
     }
+    if ilk_gun < bugun.replace(month=1, day=1):  # birden çok yıllık veri
+        hazir = {**dict(list(hazir.items())[:-1]), "Tüm kayıtlar": (ilk_gun, bugun),
+                 "Özel aralık": None}
     f2, f3 = st.columns([1.3, 1.7])
     secilen = f2.selectbox("Dönem", list(hazir), index=list(hazir).index(varsayilan))
     if hazir[secilen] is None:

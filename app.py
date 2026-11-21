@@ -39,5 +39,6 @@ SAYFALAR = [
             url_path="enerji-sarfiyatlar-2026"),
     st.Page("sayfa_tozboya.py", title="Toz Boya Aylık 2025-2026", icon="🎨",
             url_path="toz-boya-aylik"),
+    st.Page("sayfa_kalip.py", title="Kalıp Bazlı Arama", icon="🔩", url_path="kalip-arama"),
 ]
 st.navigation(SAYFALAR, position="top").run()
