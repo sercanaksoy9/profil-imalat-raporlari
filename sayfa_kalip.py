@@ -13,6 +13,7 @@ import altair as alt
 import pandas as pd
 import streamlit as st
 
+import musteriler
 from ortak import PRES_RENK, TEK_RENK, ay_etiketi, donem_sec, kaynak_notu, rapor_verisi, sayi
 
 st.title("🔩 Kalıp Bazlı Arama")
@@ -25,12 +26,8 @@ kayit, kaynak_adi, degisme, mod = veri_
 kaynak_notu(kaynak_adi, degisme, mod)
 kayit = kayit[kayit["kalip"].notna()].copy()
 kayit["kalip"] = kayit["kalip"].astype(int)
-# Müşteri adı yazım farkları birleştirilir (E-SYSTEM / E SYSTEM / ESYSTEM):
-# boşluk ve noktalama atılınca aynı olanlar en sık yazılışla gösterilir
-_anahtar = kayit["musteri"].str.replace(r"[^0-9A-ZÇĞİÖŞÜ]", "", regex=True)
-_ad = (pd.DataFrame({"a": _anahtar, "m": kayit["musteri"]}).dropna()
-       .groupby("a")["m"].agg(lambda s: s.value_counts().index[0]))
-kayit["musteri"] = _anahtar.map(_ad).astype("string")
+# Aynı müşterinin farklı yazılışları birleştirilir (tablo: musteriler.py)
+kayit["musteri"] = musteriler.birlestir(kayit["musteri"])
 
 
 def ozetle(t):
