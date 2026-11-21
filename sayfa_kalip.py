@@ -68,15 +68,17 @@ def kalip_tablosu(t):
 # ---------------------------------------------------------------------
 f1, f2, f_donem = st.columns([1, 1.6, 3])
 presler = f1.multiselect("Pres", ['6"', '8"'], default=['6"', '8"'])
-musteriler = f2.multiselect(
-    "Müşteri", kayit.groupby("musteri")["net_kg"].sum().sort_values(ascending=False).index.tolist(),
+# Ortak kayıtlar ('ASC / BG PLAST') her iki müşterinin listesinde de sayılır
+_tek = kayit.assign(m=kayit["musteri"].map(musteriler.ayir)).explode("m")
+secilen_musteri = f2.multiselect(
+    "Müşteri", _tek.groupby("m")["net_kg"].sum().sort_values(ascending=False).index.tolist(),
     placeholder="Tümü")
 with f_donem:
     bas, bit = donem_sec(kayit["tarih"].min().date(), kayit["tarih"].max().date())
 
 kayit = kayit[kayit["pres"].isin(presler)]
-if musteriler:
-    kayit = kayit[kayit["musteri"].isin(musteriler)]
+if secilen_musteri:
+    kayit = kayit[kayit["musteri"].map(lambda m: bool(set(musteriler.ayir(m)) & set(secilen_musteri)))]
 o = kayit[(kayit["tarih"].dt.date >= bas) & (kayit["tarih"].dt.date <= bit)]
 if o.empty:
     st.warning("Seçilen pres, müşteri ve tarih aralığında baskı kaydı yok.")
