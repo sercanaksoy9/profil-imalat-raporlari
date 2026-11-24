@@ -16,12 +16,14 @@ import pandas as pd
 
 UYGULAMA_KLASORU = Path(__file__).resolve().parent
 VARSAYILAN_KLASOR = Path(r"C:\Users\seco_\OneDrive\Masaüstü\ALBOND RAPORLAR")
+# Hangi Windows kullanıcısında çalışırsa çalışsın (seco_, nb, ...) kendi OneDrive yolu
+EV_KLASORU = Path.home() / "OneDrive" / "Masaüstü" / "ALBOND RAPORLAR"
 PRES_ADI = {"6''": '6"', "8''": '8"'}
 
 
 def veri_klasoru():
     aday = os.environ.get("URETIM_VERI_KLASORU")
-    for yol in (Path(aday) if aday else None, VARSAYILAN_KLASOR,
+    for yol in (Path(aday) if aday else None, EV_KLASORU, VARSAYILAN_KLASOR,
                 UYGULAMA_KLASORU / "veri"):
         if yol and yol.exists():
             return yol

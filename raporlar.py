@@ -48,7 +48,7 @@ def rapor(anahtar, kelimeler, haric=()):
 
 def kaynak_dosyasi(anahtar, kok=None):
     """Bu bilgisayarda raporun en yeni Excel dosyası (yoksa None)."""
-    kok = Path(kok or veri.VARSAYILAN_KLASOR)
+    kok = Path(kok or veri.veri_klasoru())
     if not kok.exists():
         return None
     kelimeler, haric, _ = RAPORLAR[anahtar]
