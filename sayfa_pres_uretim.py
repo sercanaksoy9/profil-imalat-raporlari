@@ -69,6 +69,14 @@ def dashboard_gunluk(b, once):
         ariza=("ariza", "sum"), isletme=("isletme", "sum"), elektrik=("elektrik", "sum"),
         planli=("planli", "sum"), diger=("diger", "sum"),
         _a=("_a", "sum"), _b=("_b", "sum"), _h=("_h", "sum")).reset_index()
+    # Kalıp değişimi: gün × pres içinde ardışık baskılarda kalıp no değiştikçe 1
+    # (günün ilk kalıbı dahil; kalıp no boş duruş satırları atlanır)
+    k = b.loc[b["kalip"].notna(), ["tarih", "pres", "kalip"]].copy()
+    k["kalip"] = k["kalip"].astype(str).str.strip()
+    k["setup"] = (k["kalip"] != k.groupby(["tarih", "pres"])["kalip"].shift()).astype(int)
+    g = g.merge(k.groupby(["tarih", "pres"])["setup"].sum().reset_index(),
+                on=["tarih", "pres"], how="left")
+    g["setup"] = g["setup"].fillna(0)
     g = g[g["hammadde"] > 0]
     g["biyet_boyu"] = (g["_b"] / g["_a"]).where(g["_a"] > 0)
     g["hiz"] = (g["_h"] / g["_a"]).where(g["_a"] > 0)
@@ -165,7 +173,8 @@ if (o["kaynak"] == "dashboard").any():
     st.info("ℹ️ 2026 öncesi günler pres raporunda yok; "
             f"**{dashboard_adi}** dosyasının 'Temiz veri' baskı kayıtlarından hesaplandı (hammadde = brüt kg, testere = net kg, net çalışma = "
             "baskı süresi). Kg ve fire raporla aynı mantıkta; duruş kırılımı DASHBOARD'daki "
-            "duruş tipinden eşlendi, setup/deneme bu dönemde yok.")
+            "duruş tipinden eşlendi. Kalıp değişimi (setup) gün içinde ardışık baskılarda "
+            "kalıp no değiştikçe sayıldı (2026 raporuyla ~%2 fark); deneme bu dönemde yok.")
 
 # Seçili dönemden önceki 30 günle kıyas (yalnız ikisi de günlük kayıttan geliyorsa)
 gun_sayisi = (bit - bas).days + 1
