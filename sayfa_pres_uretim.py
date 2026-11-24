@@ -89,7 +89,9 @@ def dashboard_gunluk(b, once):
 # Günlük + aylık kayıtları tek tabloda birleştir
 # ---------------------------------------------------------------------
 @st.cache_data(show_spinner=False)
-def kayitlari_birlestir(ozet, gunluk, baskilar):
+def kayitlari_birlestir(ozet, gunluk, baskilar, surum=2):
+    # surum: hesaplama değişince artırılır; Streamlit önbelleği yalnız bu
+    # fonksiyonun kodunu izler, çağırdığı dashboard_gunluk değişikliklerini değil.
     parcalar = []
     gunlu_aylar = set()
     if not gunluk.empty:
