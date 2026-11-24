@@ -33,6 +33,10 @@ def git(*arg):
 
 
 def main(zorla=False):
+    # Senkron birden çok bilgisayarda çalışabilir: önce diğerinin gönderdiğini al
+    cek = git("pull", "--rebase", "--autostash", "-q")
+    if cek.returncode != 0:
+        yaz(f"ÇEKİLEMEDİ: {cek.stderr.strip()}")
     bilgi = veri.bulut_bilgisi()
     onceki = bilgi.get("raporlar", {})
     yeni, degisen = {}, []
@@ -71,6 +75,10 @@ def main(zorla=False):
     if sonuc.returncode != 0 and "nothing to commit" in (sonuc.stdout + sonuc.stderr):
         return 0
     gonder = git("push", "-q")
+    if gonder.returncode != 0:
+        # Diğer bilgisayar arada göndermişse: üstüne al (çakışmada bizimki geçerli), tekrar dene
+        git("pull", "--rebase", "-X", "theirs", "-q")
+        gonder = git("push", "-q")
     if gonder.returncode != 0:
         yaz(f"GÖNDERİLEMEDİ: {gonder.stderr.strip()}")
         return 1
