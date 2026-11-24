@@ -4,6 +4,8 @@ Seçilen tarih aralığına göre detaylı rapor verir. Günlük kayıtlar ay
 sayfalarından gelir; günlük kaydı olmayan aylar (Ocak–Mayıs) 'ÖZET 6"' ve
 'ÖZET 8"' sayfalarındaki ay toplamlarıyla tamamlanır. Böyle bir ay aralığa
 kısmen de girse tam ay olarak eklenir (gün gün bölünemez), ekranda not düşülür.
+Raporun hiç kapsamadığı eski aylar (2023-08 → 2025-12) DASHBOARD 'Temiz veri'
+baskı kayıtlarından gün gün türetilir (brüt kg = hammadde, net kg = testere).
 """
 import datetime as dt
 
@@ -20,7 +22,7 @@ TOPLANAN = ["hammadde", "testere", "brut_dk", "net_dk", "durus_dk", "setup", "de
             "calismayan_kalip", "biyet_adet", *DURUS_ADI]
 GUN_ADI = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"]
 
-st.title("🏭 2026 Pres Üretim Raporu")
+st.title("🏭 Pres Üretim Raporu")
 
 ozet_veri = rapor_verisi("pres_rapor_ozet")
 if ozet_veri is None or ozet_veri[0].empty:
@@ -30,13 +32,56 @@ ozet, kaynak_adi, degisme, mod = ozet_veri
 gunluk_veri = rapor_verisi("pres_rapor_gunluk")
 gunluk = gunluk_veri[0] if gunluk_veri else pd.DataFrame()
 kaynak_notu(kaynak_adi, degisme, mod)
+kalip_veri = rapor_verisi("kalip_kayitlari")
+baskilar = kalip_veri[0] if kalip_veri else pd.DataFrame()
+dashboard_adi = kalip_veri[1] if kalip_veri else "DASHBOARD"
+
+# DASHBOARD duruş tiplerinin rapordaki duruş başlıklarına eşlenmesi
+DURUS_ESLE = [("ELEKTR", "KESİNTİ", "elektrik"), ("ARIZA", "", "ariza"),
+              ("PLANLI", "", "planli"), ("BAKIM", "", "planli"), ("TEM", "", "planli"),
+              ("SİPARİŞ", "", "isletme"), ("SIPARIŞ", "", "isletme"), ("KALIP", "", "isletme"),
+              ("İŞLETME", "", "isletme"), ("HAMMADDE", "", "isletme"), ("BİLLET", "", "isletme")]
+
+
+def _durus_basligi(tip):
+    tip = "" if pd.isna(tip) else str(tip).upper()
+    for a, b, ad in DURUS_ESLE:
+        if a in tip and b in tip:
+            return ad
+    return "diger"
+
+
+@st.cache_data(show_spinner=False)
+def dashboard_gunluk(b, once):
+    """'once' tarihinden önceki baskı kayıtlarını gün × pres toplamına çevirir."""
+    b = b[b["tarih"] < once].copy()
+    if b.empty:
+        return pd.DataFrame()
+    b["_durus"] = b["durus_tipi"].map(_durus_basligi)
+    for c in ("ariza", "isletme", "elektrik", "planli", "diger"):
+        b[c] = b["durus_dk"].where(b["_durus"] == c, 0.0)
+    boy_ok = b["biyet_boyu"].between(100, 2000) & b["piston"].notna()
+    b["_a"] = b["biyet_adet"].where(boy_ok, 0)
+    b["_b"], b["_h"] = b["biyet_boyu"] * b["_a"], b["piston"] * b["_a"]
+    g = b.groupby(["tarih", "pres"]).agg(
+        hammadde=("brut_kg", "sum"), testere=("net_kg", "sum"), net_dk=("sure_dk", "sum"),
+        durus_dk=("durus_dk", "sum"), biyet_adet=("biyet_adet", "sum"),
+        ariza=("ariza", "sum"), isletme=("isletme", "sum"), elektrik=("elektrik", "sum"),
+        planli=("planli", "sum"), diger=("diger", "sum"),
+        _a=("_a", "sum"), _b=("_b", "sum"), _h=("_h", "sum")).reset_index()
+    g = g[g["hammadde"] > 0]
+    g["biyet_boyu"] = (g["_b"] / g["_a"]).where(g["_a"] > 0)
+    g["hiz"] = (g["_h"] / g["_a"]).where(g["_a"] > 0)
+    g["brut_dk"] = g["net_dk"] + g["durus_dk"]
+    g["ay"] = g["tarih"].dt.to_period("M").dt.to_timestamp()
+    return g.drop(columns=["_a", "_b", "_h"])
 
 
 # ---------------------------------------------------------------------
 # Günlük + aylık kayıtları tek tabloda birleştir
 # ---------------------------------------------------------------------
 @st.cache_data(show_spinner=False)
-def kayitlari_birlestir(ozet, gunluk):
+def kayitlari_birlestir(ozet, gunluk, baskilar):
     parcalar = []
     gunlu_aylar = set()
     if not gunluk.empty:
@@ -54,13 +99,21 @@ def kayitlari_birlestir(ozet, gunluk):
         a["bitis"] = a["ay"] + pd.offsets.MonthEnd(0)
         a["tur"] = "ay"
         parcalar.append(a)
+    # Raporun ilk ayından önceki günler DASHBOARD'dan
+    rapor_ilk = min([x["ay"].min() for x in parcalar if not x.empty], default=None)
+    if rapor_ilk is not None and not baskilar.empty:
+        e = dashboard_gunluk(baskilar, rapor_ilk)
+        if not e.empty:
+            e["bitis"], e["tur"], e["kaynak"] = e["tarih"], "gün", "dashboard"
+            parcalar.append(e)
     k = pd.concat(parcalar, ignore_index=True)
     k[TOPLANAN] = k[TOPLANAN].fillna(0)
     k["ay"] = k["tarih"].dt.to_period("M").dt.to_timestamp()
-    return k[["tarih", "bitis", "ay", "pres", "tur", "biyet_boyu", "hiz", *TOPLANAN]]
+    k["kaynak"] = k["kaynak"].fillna("rapor") if "kaynak" in k else "rapor"
+    return k[["tarih", "bitis", "ay", "pres", "tur", "kaynak", "biyet_boyu", "hiz", *TOPLANAN]]
 
 
-kayit = kayitlari_birlestir(ozet, gunluk)
+kayit = kayitlari_birlestir(ozet, gunluk, baskilar)
 ilk_gun = kayit["tarih"].min().date()
 # Son gün: en son günlük kayıt (yoksa son ayın sonu)
 son_gun = (kayit.loc[kayit["tur"] == "gün", "tarih"].max() if (kayit["tur"] == "gün").any()
@@ -108,6 +161,11 @@ if not aylik_kisim.empty:
     st.info(f"ℹ️ {aylar} için günlük kayıt yok (ay sayfaları boş). Bu aylar ÖZET "
             "sayfasındaki **ay toplamıyla** rapora eklendi; aralık bu aylara kısmen "
             "girse de tam ay sayılır.")
+if (o["kaynak"] == "dashboard").any():
+    st.info("ℹ️ 2026 öncesi günler pres raporunda yok; "
+            f"**{dashboard_adi}** dosyasının 'Temiz veri' baskı kayıtlarından hesaplandı (hammadde = brüt kg, testere = net kg, net çalışma = "
+            "baskı süresi). Kg ve fire raporla aynı mantıkta; duruş kırılımı DASHBOARD'daki "
+            "duruş tipinden eşlendi, setup/deneme bu dönemde yok.")
 
 # Seçili dönemden önceki 30 günle kıyas (yalnız ikisi de günlük kayıttan geliyorsa)
 gun_sayisi = (bit - bas).days + 1
