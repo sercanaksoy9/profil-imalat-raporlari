@@ -34,6 +34,7 @@ gunluk = gunluk_veri[0] if gunluk_veri else pd.DataFrame()
 kaynak_notu(kaynak_adi, degisme, mod)
 kalip_veri = rapor_verisi("kalip_kayitlari")
 baskilar = kalip_veri[0] if kalip_veri else pd.DataFrame()
+dashboard_adi = kalip_veri[1] if kalip_veri else "DASHBOARD"
 
 # DASHBOARD duruş tiplerinin rapordaki duruş başlıklarına eşlenmesi
 DURUS_ESLE = [("ELEKTR", "KESİNTİ", "elektrik"), ("ARIZA", "", "ariza"),
@@ -161,8 +162,8 @@ if not aylik_kisim.empty:
             "sayfasındaki **ay toplamıyla** rapora eklendi; aralık bu aylara kısmen "
             "girse de tam ay sayılır.")
 if (o["kaynak"] == "dashboard").any():
-    st.info("ℹ️ 2026 öncesi günler pres raporunda yok; **DASHBOARD 'Temiz veri'** baskı "
-            "kayıtlarından hesaplandı (hammadde = brüt kg, testere = net kg, net çalışma = "
+    st.info("ℹ️ 2026 öncesi günler pres raporunda yok; "
+            f"**{dashboard_adi}** dosyasının 'Temiz veri' baskı kayıtlarından hesaplandı (hammadde = brüt kg, testere = net kg, net çalışma = "
             "baskı süresi). Kg ve fire raporla aynı mantıkta; duruş kırılımı DASHBOARD'daki "
             "duruş tipinden eşlendi, setup/deneme bu dönemde yok.")
 
