@@ -108,7 +108,7 @@ with sekme[0]:
     st.altair_chart(
         alt.Chart(t).mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4, color=TEK_RENK)
         .encode(x=x, y=alt.Y("ton:Q", title="Ton", axis=EKSEN), tooltip=ipucu)
-        .properties(height=300), use_container_width=True)
+        .properties(height=300), width="stretch")
     sol, sag = st.columns(2)
     for kolon, alan, baslik, renk in ((sol, "kg/saat", "Saatlik üretim (kg/saat)", PALET[1]),
                                       (sag, "kg/gün", "Günlük üretim (kg/gün)", PALET[2])):
@@ -118,7 +118,7 @@ with sekme[0]:
                 alt.Chart(t).mark_line(strokeWidth=2, color=renk,
                                        point=alt.OverlayMarkDef(size=50, color=renk))
                 .encode(x=x, y=alt.Y(f"{alan}:Q", title=alan, axis=EKSEN), tooltip=ipucu)
-                .properties(height=250), use_container_width=True)
+                .properties(height=250), width="stretch")
 
 with sekme[1]:
     olcu = st.radio("Gösterge", ["Üretim (ton)", "kg/saat", "kg/gün"], horizontal=True)
@@ -134,7 +134,7 @@ with sekme[1]:
                                 scale=alt.Scale(domain=yillar, range=PALET[:len(yillar)])),
                 tooltip=[alt.Tooltip("ay:N", title="Ay"), alt.Tooltip("yil:N", title="Yıl"),
                          alt.Tooltip(f"{olcu}:Q", title=olcu, format=",.1f")])
-        .properties(height=300), use_container_width=True)
+        .properties(height=300), width="stretch")
 
     st.subheader("Yıllık özet")
     yo = pd.DataFrame([{**ozet(grp), "Yıl": str(yil)} for yil, grp in t_hepsi.groupby("yil")])
@@ -151,7 +151,7 @@ with sekme[1]:
                  alt.Tooltip("kg_gun:Q", title="kg/gün", format=",.0f")])
     yazi = temel.mark_text(baseline="top", dy=6, fontSize=12, color="#cfd9ea").encode(
         y=alt.datum(0), text="ton_yazi:N")
-    st.altair_chart((cubuk + yazi).properties(height=300), use_container_width=True)
+    st.altair_chart((cubuk + yazi).properties(height=300), width="stretch")
     st.caption("2025 Mayıs'tan itibaren veri var (Ağustos–Eylül 2025 üretim yok); 2026 henüz "
                "tamamlanmadı. Yıl toplamları farklı ay sayılarını kapsar.")
 
@@ -162,13 +162,13 @@ with sekme[2]:
                              "kg/saat": s["kg/saat"].map(sayi), "kg/gün": s["kg/gün"].map(sayi)})
     a1, a2 = st.columns(2)
     a1.markdown("**🏆 En yüksek üretim**")
-    a1.dataframe(liste(t, "kg", False), hide_index=True, use_container_width=True)
+    a1.dataframe(liste(t, "kg", False), hide_index=True, width="stretch")
     a2.markdown("**⬇️ En düşük üretim**")
-    a2.dataframe(liste(t, "kg", True), hide_index=True, use_container_width=True)
+    a2.dataframe(liste(t, "kg", True), hide_index=True, width="stretch")
     a1.markdown("**⚡ En yüksek kg/saat**")
-    a1.dataframe(liste(t, "kg/saat", False), hide_index=True, use_container_width=True)
+    a1.dataframe(liste(t, "kg/saat", False), hide_index=True, width="stretch")
     a2.markdown("**🐢 En düşük kg/saat**")
-    a2.dataframe(liste(t, "kg/saat", True), hide_index=True, use_container_width=True)
+    a2.dataframe(liste(t, "kg/saat", True), hide_index=True, width="stretch")
 
 with sekme[3]:
     tablo_olcu = st.selectbox("Gösterge ", ["Üretim (kg/ay)", "kg/gün", "kg/saat"])
@@ -181,7 +181,7 @@ with sekme[3]:
     if alan == "kg":
         alt_sat.append({"Ay": "TOPLAM", **{c: pv[c].sum() for c in yil_sut}})
     pv = pd.concat([pv, pd.DataFrame(alt_sat)], ignore_index=True)
-    st.dataframe(pv.round(0), hide_index=True, use_container_width=True,
+    st.dataframe(pv.round(0), hide_index=True, width="stretch",
                  column_config={c: st.column_config.NumberColumn(format="localized") for c in yil_sut})
     st.caption("Ortalama satırı Excel'deki gibi ayların basit ortalamasıdır; üstteki göstergeler "
                "ise toplam kg ÷ toplam saat/gün ile hesaplanır.")

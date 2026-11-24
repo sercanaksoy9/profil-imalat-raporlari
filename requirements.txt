@@ -1,5 +1,6 @@
-streamlit>=1.40
+streamlit>=1.50
 pandas
+pyarrow
 openpyxl
 altair
 python-calamine

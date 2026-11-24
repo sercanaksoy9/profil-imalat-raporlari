@@ -136,19 +136,19 @@ with sekme[0]:
         alt.Chart(t).mark_bar(cornerRadiusTopLeft=3, cornerRadiusTopRight=3,
                               stroke="#121b2d", strokeWidth=1)
         .encode(x=x, y=alt.Y("ton:Q", title="Ton", stack=True), color=renk, tooltip=ipucu)
-        .properties(height=300), use_container_width=True)
+        .properties(height=300), width="stretch")
     sol, sag = st.columns(2)
     cizgi = alt.Chart(t).mark_line(strokeWidth=2, point=alt.OverlayMarkDef(size=40))
     with sol:
         st.subheader("Saatlik üretim (kg/saat)")
         st.altair_chart(cizgi.encode(x=x, y=alt.Y("kg/saat:Q", title="kg/saat"), color=renk,
                                      tooltip=ipucu).properties(height=250),
-                        use_container_width=True)
+                        width="stretch")
     with sag:
         st.subheader("Günlük üretim (kg/gün)")
         st.altair_chart(cizgi.encode(x=x, y=alt.Y("kg/gün:Q", title="kg/gün"), color=renk,
                                      tooltip=ipucu).properties(height=250),
-                        use_container_width=True)
+                        width="stretch")
 
 # ---------------------------------------------------------------------
 # Yıl karşılaştırma (aynı ayların yıllara göre durumu)
@@ -173,7 +173,7 @@ with sekme[1]:
                                 scale=alt.Scale(domain=yillar, range=YIL_RENK[:len(yillar)])),
                 tooltip=[alt.Tooltip("ay:N", title="Ay"), alt.Tooltip("yil:N", title="Yıl"),
                          alt.Tooltip(f"{olcu}:Q", title=olcu, format=",.1f")])
-        .properties(height=300), use_container_width=True)
+        .properties(height=300), width="stretch")
 
     st.subheader("Yıllık özet")
     yil_satir = []
@@ -213,9 +213,9 @@ with sekme[1]:
     # Tonajlar çubukların altında (eksenin hemen altı)
     yazi = temel.mark_text(baseline="top", dy=6, fontSize=11, color="#cfd9ea").encode(
         y=alt.datum(0), text="ton_yazi:N")
-    st.altair_chart((cubuk + yazi).properties(height=340), use_container_width=True)
+    st.altair_chart((cubuk + yazi).properties(height=340), width="stretch")
     with st.expander("Ayrıntılı yıllık tablo"):
-        st.dataframe(yo.drop(columns="ton_yazi"), hide_index=True, use_container_width=True,
+        st.dataframe(yo.drop(columns="ton_yazi"), hide_index=True, width="stretch",
                      column_config={c: st.column_config.NumberColumn(format="localized")
                                     for c in ["Toplam (ton)", "Aylık ort. (ton)", "kg/saat",
                                               "kg/gün", "Çalışma saati"]})
@@ -238,13 +238,13 @@ with sekme[2]:
         st.subheader(f'{pres} pres')
         a1, a2 = st.columns(2)
         a1.markdown("**🏆 En yüksek üretim**")
-        a1.dataframe(liste(tt, "kg", False), hide_index=True, use_container_width=True)
+        a1.dataframe(liste(tt, "kg", False), hide_index=True, width="stretch")
         a2.markdown("**⬇️ En düşük üretim**")
-        a2.dataframe(liste(tt, "kg", True), hide_index=True, use_container_width=True)
+        a2.dataframe(liste(tt, "kg", True), hide_index=True, width="stretch")
         a1.markdown("**⚡ En yüksek kg/saat**")
-        a1.dataframe(liste(tt, "kg/saat", False), hide_index=True, use_container_width=True)
+        a1.dataframe(liste(tt, "kg/saat", False), hide_index=True, width="stretch")
         a2.markdown("**🐢 En düşük kg/saat**")
-        a2.dataframe(liste(tt, "kg/saat", True), hide_index=True, use_container_width=True)
+        a2.dataframe(liste(tt, "kg/saat", True), hide_index=True, width="stretch")
 
 # ---------------------------------------------------------------------
 # Tablo (Excel'deki gibi: aylar satırda, yıllar sütunda)
@@ -270,7 +270,7 @@ with sekme[3]:
                        ignore_index=True)
     else:
         pv = pd.concat([pv, pd.DataFrame([alt_satir])], ignore_index=True)
-    st.dataframe(pv.round(0), hide_index=True, use_container_width=True,
+    st.dataframe(pv.round(0), hide_index=True, width="stretch",
                  column_config={c: st.column_config.NumberColumn(format="localized") for c in yil_sut})
     if tablo_pres == "Toplam" and tablo_olcu == "kg/saat":
         st.caption("Toplam kg/saat burada iki presin gerçek ortalama hızıdır (toplam kg ÷ toplam "
