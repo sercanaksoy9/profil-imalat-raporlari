@@ -2,17 +2,17 @@
  "raporlar": {
   "pres_rapor_ozet": {
    "kaynak": "2026 PRES ÜRETİM RAPORU.REV..xlsx",
-   "degisme": 1795171884,
+   "degisme": 1795500337,
    "kayit": 22
   },
   "pres_rapor_gunluk": {
    "kaynak": "2026 PRES ÜRETİM RAPORU.REV..xlsx",
-   "degisme": 1795171884,
-   "kayit": 192
+   "degisme": 1795500337,
+   "kayit": 194
   },
   "fire": {
    "kaynak": "Toplam Fire Listesi 2026_rev..xlsx",
-   "degisme": 1795171855,
+   "degisme": 1795500359,
    "kayit": 183
   },
   "uretim_aylik": {
@@ -31,10 +31,10 @@
    "kayit": 91
   },
   "kalip_kayitlari": {
-   "kaynak": "ALBOND_DASHBOARD_KASIM_GUNCEL ÜRETİMLER.xlsx",
-   "degisme": 1794904538,
-   "kayit": 12976
+   "kaynak": "24.11.2026_09.29_ALBOND_DASHBOARD_GUNCEL.xlsx",
+   "degisme": 1795502952,
+   "kayit": 13015
   }
  },
- "olusturma": "2026-11-20T14:04:44"
+ "olusturma": "2026-11-24T12:53:48"
 }
