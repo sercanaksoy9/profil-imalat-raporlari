@@ -34,7 +34,27 @@
    "kaynak": "24.11.2026_09.29_ALBOND_DASHBOARD_GUNCEL.xlsx",
    "degisme": 1795502952,
    "kayit": 13015
+  },
+  "ik_norm": {
+   "kaynak": "GÜNCEL NORM KADRO 2026.xlsx",
+   "degisme": 1794999376,
+   "kayit": 18
+  },
+  "ik_kadro": {
+   "kaynak": "GÜNCEL NORM KADRO 2026.xlsx",
+   "degisme": 1794999376,
+   "kayit": 45
+  },
+  "ik_izin": {
+   "kaynak": "YILLIK İZİN MEVCUT.xlsx",
+   "degisme": 1795525620,
+   "kayit": 17
+  },
+  "ik_yoklama": {
+   "kaynak": "PROFİL YOKLAMA.xlsx",
+   "degisme": 1795416509,
+   "kayit": 1567
   }
  },
- "olusturma": "2026-11-24T12:57:16"
+ "olusturma": "2026-11-25T12:08:07"
 }
