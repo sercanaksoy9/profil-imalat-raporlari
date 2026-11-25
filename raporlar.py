@@ -36,7 +36,7 @@ def _ay_no(metin):
 RAPORLAR = {}
 # Ekranda olan ve buluta gönderilen raporlar (yeni başlık eklenince buraya)
 AKTIF_RAPORLAR = ["pres_rapor_ozet", "pres_rapor_gunluk", "fire", "uretim_aylik", "enerji", "tozboya_aylik",
-                  "kalip_kayitlari"]
+                  "kalip_kayitlari", "ik_norm", "ik_kadro", "ik_izin", "ik_yoklama"]
 
 
 def rapor(anahtar, kelimeler, haric=()):
@@ -502,3 +502,173 @@ def bakim(yol):
         if t[c].dtype == object:
             t[c] = t[c].astype("string")
     return t
+
+
+# ---------------------------------------------------------------------
+# İK: GÜNCEL NORM KADRO, YILLIK İZİN MEVCUT, PROFİL YOKLAMA
+# (kişisel veri: doğum tarihi alınmaz; bulut panosu şifre arkasında)
+# ---------------------------------------------------------------------
+def _sayfa(yol, *kelimeler, haric=()):
+    """Adında kelimelerin hepsi geçen ilk sayfa (yoksa None)."""
+    for ad in pd.ExcelFile(yol).sheet_names:
+        s = _sade(ad)
+        if all(k in s for k in kelimeler) and not any(h in s for h in haric):
+            return ad
+    return None
+
+
+def _metin(v):
+    return re.sub(r"\s+", " ", str(v)).strip() if pd.notna(v) and str(v).strip() else None
+
+
+@rapor("ik_norm", ("guncel", "norm kadro"))
+def ik_norm(yol):
+    """'PROFİL İMALAT NORM KADRO': bölüm / görev bazında norm, mevcut, ihtiyaç."""
+    sayfa = _sayfa(yol, "profil imalat norm")
+    d = pd.read_excel(yol, sheet_name=sayfa, header=None)
+    satirlar, bolum, vardiya = [], None, None
+    for i in range(len(d)):
+        a, b, norm = (d.iat[i, j] if j < d.shape[1] else None for j in range(3))
+        a_s = _sade(a) if isinstance(a, str) else ""
+        if a_s.startswith("genel durum"):
+            break
+        sayisal = isinstance(norm, (int, float)) and not pd.isna(norm)
+        if a_s and not sayisal and a_s not in ("vardiyasi", "toplam") and len(a_s) < 30:
+            bolum = _metin(a)            # BOYAHANE, PRES, KALIPHANE, PAKETLEME ...
+            continue
+        if a_s.startswith("toplam") or not sayisal or not isinstance(b, str):
+            continue
+        if a_s:
+            vardiya = _metin(a)
+        satirlar.append({"bolum": bolum, "vardiya": vardiya, "gorev": _metin(b),
+                         "norm": norm, "mevcut": pd.to_numeric(d.iat[i, 3], errors="coerce"),
+                         "ihtiyac": pd.to_numeric(d.iat[i, 4], errors="coerce")})
+    t = pd.DataFrame(satirlar)
+    if not t.empty:
+        t["norm"] = pd.to_numeric(t["norm"], errors="coerce")
+    return t
+
+
+@rapor("ik_kadro", ("guncel", "norm kadro"))
+def ik_kadro(yol):
+    """'PROFİL İMALAT KADRO': personel listesi (bölüm, pozisyon, işe giriş)."""
+    sayfa = _sayfa(yol, "profil imalat kadro", haric=("norm",))
+    d = pd.read_excel(yol, sheet_name=sayfa, header=None)
+    for i in range(min(len(d), 30)):
+        basliklar = {}
+        for j, v in d.iloc[i].items():   # aynı ad iki kez varsa ilki (sağdaki özet tablo değil)
+            if isinstance(v, str):
+                basliklar.setdefault(_sade(v), j)
+        ad = next((j for k, j in basliklar.items() if "adi soyadi" in k), None)
+        if ad is None:
+            continue
+        bolum = next((j for k, j in basliklar.items() if k == "bolum"), None)
+        poz = next((j for k, j in basliklar.items() if k.startswith("pozisyon")), None)
+        giris = next((j for k, j in basliklar.items() if "giris" in k), None)
+        satirlar = []
+        for k in range(i + 1, len(d)):
+            isim = _metin(d.iat[k, ad])
+            if not isim:
+                continue
+            satirlar.append({"bolum": _metin(d.iat[k, bolum]) if bolum is not None else None,
+                             "ad": isim,
+                             "pozisyon": _metin(d.iat[k, poz]) if poz is not None else None,
+                             "giris": pd.to_datetime(d.iat[k, giris], errors="coerce")
+                             if giris is not None else pd.NaT})
+        return pd.DataFrame(satirlar)
+    return pd.DataFrame(columns=["bolum", "ad", "pozisyon", "giris"])
+
+
+@rapor("ik_izin", ("yillik izin",))
+def ik_izin(yol):
+    """YILLIK İZİN MEVCUT: kişi başı yıl yıl hak, kullanılan, kalan (gün).
+    Kalan = yıl haklarının toplamı − kullanılan (Excel'deki gibi)."""
+    d = pd.read_excel(yol, sheet_name=0, header=None)
+    bas = next(i for i in range(min(len(d), 10))
+               if any(isinstance(v, str) and "adi soyadi" in _sade(v) for v in d.iloc[i]))
+    sutun = {}
+    for j, v in d.iloc[bas].items():
+        if isinstance(v, (int, float)) and not pd.isna(v) and 2000 < v < 2100:
+            sutun[j] = f"hak_{int(v)}"
+            continue
+        s = _sade(v) if isinstance(v, str) else ""
+        for anahtar, ad in (("sicil", "sicil"), ("adi soyadi", "ad"), ("bolum", "bolum"),
+                            ("giris", "giris"), ("hakedis", "hakedis"),
+                            ("kullanilan", "kullanilan"), ("kalan", "kalan")):
+            if anahtar in s and ad not in sutun.values():
+                sutun[j] = ad
+                break
+    t = d.iloc[bas + 1:, list(sutun)].rename(columns=sutun)
+    t["ad"] = t["ad"].map(_metin)
+    t = t[t["ad"].notna()].copy()
+    for c in t.columns:
+        if c in ("giris", "hakedis"):
+            t[c] = pd.to_datetime(t[c], errors="coerce")
+        elif c in ("ad", "bolum"):
+            t[c] = t[c].map(_metin).astype("string")
+        else:
+            t[c] = pd.to_numeric(t[c], errors="coerce")
+    t["sicil"] = t["sicil"].astype("Int64")
+    return t.reset_index(drop=True)
+
+
+IZIN_TURLERI = {"Yıllık izin": ("yillik", "yilllk"), "Ücretsiz izin": ("ucretsiz", "ucretiz"),
+                "Rapor": ("rapor",), "İş kazası": ("is kazasi",), "Doğum günü": ("dogum gunu",),
+                "Erken çıkış / geç giriş": ("cikis", "cikti", "giris yapti"),
+                "Kart unutma": ("kart",)}
+
+
+def izin_turleri(aciklama):
+    """Açıklama yazısındaki izin türleri (kelime araması)."""
+    s = _sade(aciklama or "")
+    return [tur for tur, kel in IZIN_TURLERI.items() if any(k in s for k in kel)]
+
+
+@rapor("ik_yoklama", ("yoklama",))
+def ik_yoklama(yol):
+    """PROFİL YOKLAMA: ay sayfalarında kişi × gün devamsızlık saati (8 = tam gün).
+    Yalnız adında yıl olan sayfalar (Ağustos 2025 ve sonrası) okunur.
+    tip='kisi' satırları ayın kadrosunu ve açıklamayı, tip='gun' satırları
+    devamsızlık saatlerini taşır."""
+    satirlar = []
+    for sayfa in pd.ExcelFile(yol).sheet_names:
+        yil = re.findall(r"20\d\d", sayfa)
+        ay = _ay_no(re.sub(r"20\d\d", "", sayfa))
+        if not yil or not ay:
+            continue
+        donem = pd.Timestamp(int(yil[0]), ay, 1)
+        d = pd.read_excel(yol, sheet_name=sayfa, header=None)
+        bas = next((i for i in range(min(len(d), 10))
+                    if any(isinstance(v, str) and "ad soyad" in _sade(v) for v in d.iloc[i])), None)
+        if bas is None:
+            continue
+        b = d.iloc[bas]
+        ad_j = next(j for j, v in b.items() if isinstance(v, str) and "ad soyad" in _sade(v))
+        sicil_j = next((j for j, v in b.items() if isinstance(v, str) and "sicil" in _sade(v)), None)
+        acik_j = next((j for j, v in b.items() if isinstance(v, str) and "aciklama" in _sade(v)), None)
+        gunler = {j: int(v) for j, v in b.items()
+                  if j > ad_j and isinstance(v, (int, float)) and not pd.isna(v) and 1 <= v <= 31}
+        for k in range(bas + 1, len(d)):
+            isim = _metin(d.iat[k, ad_j])
+            if not isim:
+                continue
+            sicil = pd.to_numeric(d.iat[k, sicil_j], errors="coerce") if sicil_j is not None else None
+            ortak_ = {"ay": donem, "ad": isim, "sicil": sicil}
+            satirlar.append({**ortak_, "tip": "kisi", "gun": pd.NaT, "saat": 0.0,
+                             "aciklama": _metin(d.iat[k, acik_j]) if acik_j is not None else None})
+            for j, g in gunler.items():
+                saat = pd.to_numeric(str(d.iat[k, j]).strip().strip("'").replace(",", "."),
+                                     errors="coerce")
+                if pd.isna(saat) or saat <= 0:
+                    continue
+                try:
+                    tarih = pd.Timestamp(donem.year, donem.month, g)
+                except ValueError:       # 31 çeken sütun 30 günlük ayda
+                    continue
+                satirlar.append({**ortak_, "tip": "gun", "gun": tarih, "saat": float(saat),
+                                 "aciklama": None})
+    t = pd.DataFrame(satirlar, columns=["ay", "ad", "sicil", "tip", "gun", "saat", "aciklama"])
+    t["sicil"] = pd.to_numeric(t["sicil"], errors="coerce").astype("Int64")
+    for c in ("ad", "tip", "aciklama"):
+        t[c] = t[c].astype("string")
+    return t.sort_values(["ay", "tip", "ad"]).reset_index(drop=True)
