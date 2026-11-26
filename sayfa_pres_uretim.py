@@ -13,7 +13,7 @@ import altair as alt
 import pandas as pd
 import streamlit as st
 
-from ortak import (masaustu_tablo, PALET, PRES_RENK, TEK_RENK, ay_etiketi, donem_sec, kaynak_notu,
+from ortak import (ZEMIN, masaustu_tablo, PALET, PRES_RENK, TEK_RENK, ay_etiketi, donem_sec, kaynak_notu,
                    rapor_verisi, sayi)
 
 DURUS_ADI = {"ariza": "Arıza", "isletme": "İşletme", "elektrik": "Elektrik Kesintisi",
@@ -268,7 +268,7 @@ with sekme[0]:
         st.subheader(f"Testere (net) üretim, ton · {kirilim.lower()} bazında")
         st.altair_chart(
             alt.Chart(d).mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4,
-                                  stroke="#121b2d", strokeWidth=2)
+                                  stroke=ZEMIN, strokeWidth=2)
             .encode(x=x, y=alt.Y("testere_ton:Q", title="Ton", stack=True), color=renk,
                     tooltip=ipucu).properties(height=280), width="stretch")
         sol, sag = st.columns(2)
@@ -322,7 +322,7 @@ with sekme[1]:
         pay["oran"] = pay["ton"] / pay["ton"].sum() * 100
         st.subheader("Testere üretimindeki pay")
         st.altair_chart(
-            alt.Chart(pay).mark_bar(stroke="#121b2d", strokeWidth=2, height=28)
+            alt.Chart(pay).mark_bar(stroke=ZEMIN, strokeWidth=2, height=28)
             .encode(x=alt.X("ton:Q", stack="normalize", title=None, axis=alt.Axis(format="%")),
                     color=alt.Color("pres:N", scale=PRES_RENK, title="Pres",
                                     legend=alt.Legend(orient="top")),
@@ -371,7 +371,7 @@ with sekme[2]:
             sira = list(durus.sort_values("sira")["etiket"].unique())
             st.altair_chart(
                 alt.Chart(durus).mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4,
-                                          stroke="#121b2d", strokeWidth=2)
+                                          stroke=ZEMIN, strokeWidth=2)
                 .encode(x=alt.X("etiket:O", title=None, sort=sira, axis=alt.Axis(labelAngle=0 if len(sira) <= 14 else -45)),
                         y=alt.Y("sum(saat):Q", title="Saat", stack=True),
                         color=alt.Color("tip_adi:N", scale=tip_renk, title="Tip",

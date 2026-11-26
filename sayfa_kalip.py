@@ -14,7 +14,7 @@ import pandas as pd
 import streamlit as st
 
 import musteriler
-from ortak import PRES_RENK, TEK_RENK, ay_etiketi, donem_sec, kaynak_notu, rapor_verisi, sayi
+from ortak import ZEMIN, PRES_RENK, TEK_RENK, ay_etiketi, donem_sec, kaynak_notu, rapor_verisi, sayi
 
 st.title("🔩 Kalıp Bazlı Arama")
 
@@ -168,7 +168,7 @@ if secili is not None:
                  alt.Tooltip("biyet:Q", title="Biyet")]
         st.subheader("Net üretim (kg) · " + ("baskı günü" if gun_sayisi <= 40 else "ay") + " bazında")
         st.altair_chart(alt.Chart(d).mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4,
-                                              stroke="#121b2d", strokeWidth=2)
+                                              stroke=ZEMIN, strokeWidth=2)
                         .encode(x=x, y=alt.Y("net_kg:Q", title="kg", stack=True), color=renk,
                                 tooltip=ipucu).properties(height=250), use_container_width=True)
         cizgi = alt.Chart(d).mark_line(strokeWidth=2, point=alt.OverlayMarkDef(size=60))

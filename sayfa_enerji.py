@@ -9,7 +9,7 @@ import altair as alt
 import pandas as pd
 import streamlit as st
 
-from ortak import PALET, ay_etiketi, kaynak_notu, rapor_verisi, sayi
+from ortak import ZEMIN, SONUK, PALET, ay_etiketi, kaynak_notu, rapor_verisi, sayi
 from raporlar import enerji_ozet
 
 st.title("⚡ Enerji Sarfiyatlar 2026")
@@ -102,7 +102,7 @@ def cizgi(u, baslik_y, renkler, adlar, bicim=",.1f"):
 
 
 def yigin(u, baslik_y, renkler, adlar, bicim=",.0f"):
-    return (alt.Chart(u).mark_bar(stroke="#121b2d", strokeWidth=1)
+    return (alt.Chart(u).mark_bar(stroke=ZEMIN, strokeWidth=1)
             .encode(x=x, y=alt.Y("deger:Q", title=baslik_y, stack=True, axis=EKSEN),
                     color=alt.Color("ad:N", title=None, legend=alt.Legend(orient="top"),
                                     scale=alt.Scale(domain=adlar, range=renkler), sort=adlar),
@@ -152,7 +152,7 @@ with sekme[1]:
     st.subheader("Fabrika elektrik tüketimi (MWh)")
     u = uzun(["prese_ait_kwh", "boya_kwh", "diger_kwh"], ad)
     u["deger"] = u["deger"] / 1000
-    st.altair_chart(yigin(u, "MWh", [PALET[0], PALET[4], "#4f5a70"], ad, ",.1f"),
+    st.altair_chart(yigin(u, "MWh", [PALET[0], PALET[4], SONUK], ad, ",.1f"),
                     width="stretch")
     sol, sag = st.columns(2)
     with sol:
@@ -179,7 +179,7 @@ with sekme[2]:
     st.subheader("Fabrika doğalgaz tüketimi (bin m³)")
     u = uzun(["p6_gaz", "p8_gaz", "termik_gaz", "boya_gaz", "diger_gaz"], ad)
     u["deger"] = u["deger"] / 1000
-    st.altair_chart(yigin(u, "bin m³", [PALET[0], PALET[1], PALET[3], PALET[4], "#4f5a70"], ad,
+    st.altair_chart(yigin(u, "bin m³", [PALET[0], PALET[1], PALET[3], PALET[4], SONUK], ad,
                           ",.1f"), width="stretch")
     sol, sag = st.columns(2)
     with sol:

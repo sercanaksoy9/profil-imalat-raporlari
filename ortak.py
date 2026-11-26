@@ -8,50 +8,50 @@ import veri
 
 AY_ADI = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki",
           "Kas", "Ara"]
-# Doğrulanmış kategorik paletin koyu zemin tonları, sabit sıra
+# Doğrulanmış kategorik paletin açık zemin tonları, sabit sıra
 # (renk varlığı izler, sırayı değil)
-PALET = ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181", "#0ca30c",
-         "#9085e9", "#e66767"]
+PALET = ["#257de0", "#f47230", "#00b894", "#f2a600", "#ee7fac", "#008a17",
+         "#6a4ce2", "#ec4647"]
 PRES_RENK = alt.Scale(domain=['6"', '8"'], range=PALET[:2])
 TEK_RENK = PALET[0]
-ZEMIN = "#121b2d"      # kart / grafik zemini (çubuklar arası boşluk rengi)
-SONUK = "#4f5a70"      # "geri kalanı" gibi ikincil kalemler
+ZEMIN = "#f4f5f2"      # sayfa / grafik zemini (çubuklar arası boşluk rengi)
+SONUK = "#a3abb8"      # "geri kalanı" gibi ikincil kalemler
+YAZI = "#3d4654"       # grafik üstü değer etiketleri
 
 TEMA_CSS = """
 <style>
 /* Üst menü şeridi */
-[data-testid="stHeader"] { background: #0a101c; border-bottom: 1px solid #1c2740; }
+[data-testid="stHeader"] { background: #f4f5f2; border-bottom: 1px solid #e1e4e8; }
 [data-testid="stAppDeployButton"] { display: none; }
 .block-container { padding-top: 3.6rem; max-width: 1500px; }
+[data-testid="stSidebar"] { background: #eceee9; border-right: 1px solid #e1e4e8; }
 
-/* Marka şeridi */
+/* Marka şeridi: düz, sade */
 .albond-bant { display: flex; align-items: center; justify-content: space-between;
-  gap: 12px; flex-wrap: wrap; margin: 0 0 1.1rem 0; padding: 12px 18px;
-  background: linear-gradient(90deg, #13213d 0%, #0f1a30 60%, #0b1324 100%);
-  border: 1px solid #22304a; border-left: 4px solid #3987e5; border-radius: 10px; }
-.albond-bant .marka { font-weight: 800; letter-spacing: .14em; color: #fff; font-size: .95rem; }
-.albond-bant .marka span { color: #8fb4f0; font-weight: 600; letter-spacing: .04em;
+  gap: 12px; flex-wrap: wrap; margin: 0 0 1.1rem 0; padding: 10px 16px;
+  background: #fcfcfb; border: 1px solid #e1e4e8; border-left: 3px solid #2f6fbf;
+  border-radius: 10px; }
+.albond-bant .marka { font-weight: 800; letter-spacing: .14em; color: #2b3340; font-size: .95rem; }
+.albond-bant .marka span { color: #5b6b82; font-weight: 600; letter-spacing: .04em;
   margin-left: 10px; font-size: .9rem; }
-.albond-bant .canli { color: #9fb0cc; font-size: .8rem; white-space: nowrap; }
+.albond-bant .canli { color: #6b7585; font-size: .8rem; white-space: nowrap; }
 .albond-bant .nokta { display: inline-block; width: 8px; height: 8px; border-radius: 50%;
-  background: #22c55e; box-shadow: 0 0 0 0 rgba(34,197,94,.6); margin-right: 6px;
-  animation: nabiz 2s infinite; vertical-align: middle; }
-@keyframes nabiz { 0% { box-shadow: 0 0 0 0 rgba(34,197,94,.55); }
-  70% { box-shadow: 0 0 0 8px rgba(34,197,94,0); } 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); } }
+  background: #2e9e5b; margin-right: 6px; vertical-align: middle; }
 
 /* Başlıklar */
-h1 { font-size: 1.85rem !important; font-weight: 800 !important; letter-spacing: -.01em; }
-h3 { font-size: 1.05rem !important; font-weight: 700 !important; color: #cfd9ea !important;
+h1 { font-size: 1.85rem !important; font-weight: 800 !important; letter-spacing: -.01em;
+  color: #232b37 !important; }
+h3 { font-size: 1.05rem !important; font-weight: 700 !important; color: #3d4654 !important;
   text-transform: none; }
-h4 { color: #e4eaf4 !important; font-weight: 700 !important; }
+h4 { color: #2b3340 !important; font-weight: 700 !important; }
 
-/* Gösterge kartları */
-[data-testid="stMetric"] { background: linear-gradient(180deg, #152038 0%, #111a2c 100%);
-  border: 1px solid #22304a; border-left: 4px solid #3987e5; border-radius: 10px;
-  padding: 14px 16px 12px 16px; box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+/* Gösterge kartları: düz zemin, ince çerçeve, gölgesiz */
+[data-testid="stMetric"] { background: #fcfcfb;
+  border: 1px solid #e1e4e8; border-left: 3px solid #2f6fbf; border-radius: 10px;
+  padding: 14px 16px 12px 16px; }
 [data-testid="stMetricLabel"] p { text-transform: uppercase; letter-spacing: .07em;
-  font-size: .72rem !important; font-weight: 600; color: #8b9bb8 !important; }
-[data-testid="stMetricValue"] { color: #ffffff; font-size: 2rem !important; line-height: 1.15; }
+  font-size: .72rem !important; font-weight: 600; color: #6b7585 !important; }
+[data-testid="stMetricValue"] { color: #232b37; font-size: 2rem !important; line-height: 1.15; }
 /* Orta genişlikte (4 kart yan yana sığmayınca) rakamlar kesilmesin */
 @media (max-width: 1150px) {
   [data-testid="stMetric"] { padding: 10px 10px 8px 12px; }
@@ -62,17 +62,17 @@ h4 { color: #e4eaf4 !important; font-weight: 700 !important; }
 }
 
 /* Grafik ve tablo kartları */
-[data-testid="stVegaLiteChart"] { background: #121b2d; border: 1px solid #22304a;
+[data-testid="stVegaLiteChart"] { background: transparent; border: 1px solid #e1e4e8;
   border-radius: 10px; padding: 10px 8px 4px 8px; }
 [data-testid="stDataFrame"] { border-radius: 10px; }
 
 /* Sekmeler */
-[data-baseweb="tab-list"] { gap: 4px; border-bottom: 1px solid #22304a; }
+[data-baseweb="tab-list"] { gap: 4px; border-bottom: 1px solid #e1e4e8; }
 [data-baseweb="tab"] { font-weight: 600; padding: 8px 14px !important; border-radius: 8px 8px 0 0; }
-[data-baseweb="tab"][aria-selected="true"] { background: #16213a; }
+[data-baseweb="tab"][aria-selected="true"] { background: #e8eef7; }
 
 /* Açıklama yazıları */
-[data-testid="stCaptionContainer"] { color: #8392ad !important; }
+[data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] p { color: #5f6978 !important; }
 /* Telefon menüsü (yalnız dar ekranda görünür) */
 .st-key-mobil_menu { display: none !important; }
 
@@ -92,10 +92,10 @@ h4 { color: #e4eaf4 !important; font-weight: 700 !important; }
     overflow-x: auto; gap: 6px !important; padding-bottom: 4px; scrollbar-width: none; }
   .st-key-mobil_menu::-webkit-scrollbar { display: none; }
   .st-key-mobil_menu > div { flex: 0 0 auto !important; width: auto !important; min-width: 0 !important; }
-  .st-key-mobil_menu a { background: #121b2d; border: 1px solid #22304a; border-radius: 999px;
+  .st-key-mobil_menu a { background: #fcfcfb; border: 1px solid #d9dde3; border-radius: 999px;
     padding: 6px 13px !important; min-height: 38px; white-space: nowrap; }
   .st-key-mobil_menu a[aria-current="page"], .st-key-mobil_menu a:has(span[data-testid="stPageLink-active"]) {
-    background: #1d3157; border-color: #3987e5; }
+    background: #e3ecf8; border-color: #2f6fbf; }
 
   /* KPI kartları: 2'li ızgara */
   [data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"] > [data-testid="stVerticalBlock"]
@@ -126,8 +126,8 @@ h4 { color: #e4eaf4 !important; font-weight: 700 !important; }
 
   /* Kalabalık ayrıntı tabloları telefonda gizli (CSV düğmesi kalır) */
   [class*="st-key-masaustu_"] > * { display: none !important; }
-  [class*="st-key-masaustu_"]::before { display: block; padding: 10px 12px; color: #8392ad;
-    font-size: .8rem; border: 1px dashed #22304a; border-radius: 10px;
+  [class*="st-key-masaustu_"]::before { display: block; padding: 10px 12px; color: #6b7585;
+    font-size: .8rem; border: 1px dashed #cfd4db; border-radius: 10px;
     content: "📋 Ayrıntılı tablo telefonda gizli. Masaüstünde açın ya da CSV indirin."; }
 }
 </style>
