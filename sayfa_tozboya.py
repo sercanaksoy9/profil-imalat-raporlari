@@ -11,7 +11,7 @@ import altair as alt
 import pandas as pd
 import streamlit as st
 
-from ortak import AY_ADI, PALET, TEK_RENK, ay_etiketi, kaynak_notu, rapor_verisi, sayi
+from ortak import YAZI, AY_ADI, PALET, TEK_RENK, ay_etiketi, kaynak_notu, rapor_verisi, sayi
 
 st.title("🎨 Toz Boya Üretimleri Aylık 2025–2026")
 
@@ -149,7 +149,7 @@ with sekme[1]:
                  alt.Tooltip("ton:Q", title="Toplam ton", format=",.1f"),
                  alt.Tooltip("kg_saat:Q", title="kg/saat", format=",.0f"),
                  alt.Tooltip("kg_gun:Q", title="kg/gün", format=",.0f")])
-    yazi = temel.mark_text(baseline="top", dy=6, fontSize=12, color="#cfd9ea").encode(
+    yazi = temel.mark_text(baseline="top", dy=6, fontSize=12, color=YAZI).encode(
         y=alt.datum(0), text="ton_yazi:N")
     st.altair_chart((cubuk + yazi).properties(height=300), width="stretch")
     st.caption("2025 Mayıs'tan itibaren veri var (Ağustos–Eylül 2025 üretim yok); 2026 henüz "

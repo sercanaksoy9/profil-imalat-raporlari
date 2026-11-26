@@ -1,19 +1,19 @@
-# Koyu "kontrol odası" teması
+# Açık, göz yormayan tema (kırık beyaz zemin, yumuşak gri kartlar)
 [theme]
-base = "dark"
-primaryColor = "#3987e5"
-backgroundColor = "#0a101c"
-secondaryBackgroundColor = "#121b2d"
-textColor = "#e4eaf4"
-borderColor = "#22304a"
-dataframeBorderColor = "#22304a"
-dataframeHeaderBackgroundColor = "#16213a"
+base = "light"
+primaryColor = "#2f6fbf"
+backgroundColor = "#f4f5f2"
+secondaryBackgroundColor = "#e9ecef"
+textColor = "#2b3340"
+borderColor = "#d9dde3"
+dataframeBorderColor = "#e1e4e8"
+dataframeHeaderBackgroundColor = "#eef0f3"
 showWidgetBorder = true
 baseRadius = "10px"
 font = "Inter:https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
 headingFont = "Inter:https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
 metricValueFontWeight = 700
-chartCategoricalColors = ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181", "#0ca30c", "#9085e9", "#e66767"]
+chartCategoricalColors = ["#257de0", "#f47230", "#00b894", "#f2a600", "#ee7fac", "#008a17", "#6a4ce2", "#ec4647"]
 
 [client]
 toolbarMode = "minimal"
