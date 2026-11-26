@@ -13,7 +13,7 @@ import altair as alt
 import pandas as pd
 import streamlit as st
 
-from ortak import (PALET, PRES_RENK, TEK_RENK, ay_etiketi, donem_sec, kaynak_notu,
+from ortak import (masaustu_tablo, PALET, PRES_RENK, TEK_RENK, ay_etiketi, donem_sec, kaynak_notu,
                    rapor_verisi, sayi)
 
 DURUS_ADI = {"ariza": "Arıza", "isletme": "İşletme", "elektrik": "Elektrik Kesintisi",
@@ -457,7 +457,8 @@ with sekme[4]:
     })
     bos = [c for c in cikti.columns if c.endswith("(dk)") and c != "Duruş (dk)" and (cikti[c] == 0).all()]
     cikti = cikti.drop(columns=bos)
-    st.dataframe(cikti, hide_index=True, width="stretch")
+    with masaustu_tablo("detay"):
+        st.dataframe(cikti, hide_index=True, width="stretch")
     st.download_button("⬇️ CSV indir", cikti.to_csv(index=False, sep=";", decimal=",")
                        .encode("utf-8-sig"),
                        file_name=f"pres_uretim_{bas:%Y%m%d}_{bit:%Y%m%d}.csv", mime="text/csv")

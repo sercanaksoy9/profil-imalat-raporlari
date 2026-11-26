@@ -12,7 +12,7 @@ import altair as alt
 import pandas as pd
 import streamlit as st
 
-from ortak import (PALET, SONUK, TEK_RENK, ay_etiketi, kaynak_notu, rapor_verisi,
+from ortak import (masaustu_tablo, PALET, SONUK, TEK_RENK, ay_etiketi, kaynak_notu, rapor_verisi,
                    sayi)
 from raporlar import izin_turleri
 
@@ -291,8 +291,9 @@ with sekme[2]:
              .sort_values("Toplam saat", ascending=False, na_position="last"))
     tablo = tablo[["Toplam saat"] + [c for c in tablo.columns if c not in ("Toplam saat", "aciklama")]
                   + ["aciklama"]].rename(columns={"aciklama": "Açıklama"})
-    st.dataframe(tablo.reset_index().rename(columns={"ad": "Ad Soyad"}), hide_index=True,
-                 width="stretch")
+    with masaustu_tablo("yoklama"):
+        st.dataframe(tablo.reset_index().rename(columns={"ad": "Ad Soyad"}), hide_index=True,
+                     width="stretch")
     st.download_button("⬇️ CSV indir",
                        tablo.to_csv(sep=";", decimal=",").encode("utf-8-sig"),
                        file_name=f"yoklama_{bit:%Y_%m}.csv", mime="text/csv")
