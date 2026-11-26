@@ -1,6 +1,6 @@
 """ALBOND RAPORLAR klasöründeki raporları bulut uygulamasına taşır.
 
-Windows Görev Zamanlayıcı bunu 15 dakikada bir çalıştırır. Ekrandaki
+Windows Görev Zamanlayıcı bunu her gün 12:00 ve 18:00'de çalıştırır. Ekrandaki
 raporların (raporlar.AKTIF_RAPORLAR) kaynak Excel'i değiştiyse temizlenmiş
 veriyi veri/<anahtar>.parquet'e yazar ve private GitHub reposuna gönderir;
 Streamlit Cloud uygulaması birkaç dakika içinde yenilenir. Değişiklik
