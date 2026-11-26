@@ -25,6 +25,12 @@ TEMA_CSS = """
 [data-testid="stAppDeployButton"] { display: none; }
 .block-container { padding-top: 3.6rem; max-width: 1500px; }
 [data-testid="stSidebar"] { background: #eceee9; border-right: 1px solid #e1e4e8; }
+/* Sol sayfa menüsü (masaüstü) */
+[data-testid="stSidebarNav"] a { border-radius: 8px; padding: 6px 10px; margin: 1px 0; }
+[data-testid="stSidebarNav"] a span { color: #3d4654; font-weight: 500;
+  white-space: normal !important; overflow: visible !important; text-overflow: clip !important; }
+[data-testid="stSidebarNav"] a[aria-current="page"] { background: #e3ecf8; }
+[data-testid="stSidebarNav"] a[aria-current="page"] span { color: #1f4f8f; font-weight: 700; }
 
 /* Marka şeridi: düz, sade */
 .albond-bant { display: flex; align-items: center; justify-content: space-between;
@@ -52,6 +58,9 @@ h4 { color: #2b3340 !important; font-weight: 700 !important; }
 [data-testid="stMetricLabel"] p { text-transform: uppercase; letter-spacing: .07em;
   font-size: .72rem !important; font-weight: 600; color: #6b7585 !important; }
 [data-testid="stMetricValue"] { color: #232b37; font-size: 2rem !important; line-height: 1.15; }
+/* Uzun kart başlıkları "..." ile kesilmesin, alt satıra geçsin */
+[data-testid="stMetricLabel"], [data-testid="stMetricLabel"] * {
+  white-space: normal !important; overflow: visible !important; text-overflow: clip !important; }
 /* Orta genişlikte (4 kart yan yana sığmayınca) rakamlar kesilmesin */
 @media (max-width: 1150px) {
   [data-testid="stMetric"] { padding: 10px 10px 8px 12px; }

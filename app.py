@@ -42,7 +42,7 @@ SAYFALAR = [
     st.Page("sayfa_ik.py", title="İK", icon="👥", url_path="ik"),
     st.Page("sayfa_kalip.py", title="Kalıp Bazlı Arama", icon="🔩", url_path="kalip-arama"),
 ]
-secili = st.navigation(SAYFALAR, position="top")
+secili = st.navigation(SAYFALAR, position="sidebar")
 
 # Telefonda üst menü yan panele saklanıyor; onun yerine kaydırılabilir kısa menü
 KISA_AD = ["Pres", "Fire", "Aylık", "Enerji", "Toz Boya", "İK", "Kalıp"]
