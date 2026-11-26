@@ -15,7 +15,7 @@ import altair as alt
 import pandas as pd
 import streamlit as st
 
-from ortak import PALET, TEK_RENK, ay_etiketi, donem_sec, kaynak_notu, rapor_verisi, sayi
+from ortak import masaustu_tablo, PALET, TEK_RENK, ay_etiketi, donem_sec, kaynak_notu, rapor_verisi, sayi
 from raporlar import FIRE_BASLANGIC, fire_ozet
 
 ORAN_ADI = {"pres_fire": "Pres firesi", "ps_fire": "Pres sonrası fire",
@@ -280,7 +280,8 @@ with sekme[4]:
     })
     bos = [c for c in cikti.columns[1:] if pd.to_numeric(cikti[c], errors="coerce").fillna(0).eq(0).all()]
     cikti = cikti.drop(columns=bos)
-    st.dataframe(cikti, hide_index=True, width="stretch")
+    with masaustu_tablo("detay"):
+        st.dataframe(cikti, hide_index=True, width="stretch")
     if bos:
         st.caption("Seçilen aralıkta hiç değeri olmayan sütunlar gizlendi: " + ", ".join(bos))
     st.download_button("⬇️ CSV indir", cikti.to_csv(index=False, sep=";", decimal=",")
