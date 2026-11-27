@@ -36,6 +36,7 @@ def _ay_no(metin):
 RAPORLAR = {}
 # Ekranda olan ve buluta gönderilen raporlar (yeni başlık eklenince buraya)
 AKTIF_RAPORLAR = ["pres_rapor_ozet", "pres_rapor_gunluk", "fire", "uretim_aylik", "enerji", "tozboya_aylik",
+                  "tozboya_detay", "tozboya_hurda_boya", "tozboya_kimyasal",
                   "kalip_kayitlari", "ik_norm", "ik_kadro", "ik_izin", "ik_yoklama"]
 
 
@@ -224,6 +225,144 @@ def pres_aylik(yol):
 @rapor("tozboya_aylik", ("toz boya", "aylik"))
 def tozboya_aylik(yol):
     return _yil_ay_bloklari(yol, lambda s: "Toz Boya Toplam" if "toplam" in _sade(s) else "Toz Boya")
+
+
+# ---------------------------------------------------------------------
+# Toz Boya Yıllık Üretim Raporu (2026 TOZ BOYA YILLIK ÜRETİM RAPORU.xlsx)
+#  'Yıllık Rapor'      : sipariş satırları (m², net kg, hurda, harcanan boya,
+#                        boya kodu/firması, çalışma saati). Boya, rengin ilk
+#                        satırına girilir; sonraki satırlar aynı boya partisidir.
+#  'Üretim Hesaplama'  : 'Hurda Boya Kg' (aylık, elle girilen)
+#  'Kimyasal Takip'    : ön işlem banyolarına kurulum ve takviye (kg), durulama,
+#                        'Öngörülen(Gr/m2)' hedef aralıkları
+# ---------------------------------------------------------------------
+def _baslik_satiri(d, *kelimeler):
+    """Tüm kelimeleri içeren ilk satırın no'su ve {sade başlık: sütun}."""
+    for i in range(min(len(d), 40)):
+        hucre = {_sade(v): j for j, v in d.iloc[i].items() if isinstance(v, str)}
+        if all(any(k in h for h in hucre) for k in kelimeler):
+            return i, hucre
+    return None, {}
+
+
+def _sutun(hucre, *kelimeler):
+    return next((j for h, j in hucre.items() if all(k in h for k in kelimeler)), None)
+
+
+TB_SUTUN = {"tarih": ("tarih",), "musteri": ("musteri",), "profil": ("profil no",),
+            "net_kg": ("net uretim",), "hurda_kg": ("hurda miktari",),
+            "m2": ("toplam m",), "boya_kodu": ("boya kodu",), "boya_kg": ("harcanan boya",),
+            "firma": ("boya firmasi",), "saat": ("calisma suresi",),
+            "konveyor_saat": ("konveyor",)}
+
+
+@rapor("tozboya_detay", ("toz boya", "yillik"))
+def tozboya_detay(yol):
+    sayfa = _sayfa(yol, "yillik rapor")
+    if sayfa is None:
+        return pd.DataFrame()
+    d = pd.read_excel(yol, sheet_name=sayfa, header=None)
+    i, hucre = _baslik_satiri(d, "harcanan boya", "toplam m")
+    if i is None:
+        return pd.DataFrame()
+    t = pd.DataFrame({ad: d.iloc[i + 1:, _sutun(hucre, *k)] if _sutun(hucre, *k) is not None
+                      else None for ad, k in TB_SUTUN.items()})
+    t["tarih"] = pd.to_datetime(t["tarih"], errors="coerce")
+    t = t[t["tarih"].notna()].copy()
+    for c in ("net_kg", "hurda_kg", "m2", "boya_kg", "saat", "konveyor_saat"):
+        t[c] = pd.to_numeric(t[c], errors="coerce").astype(float)
+    # Boya partisi: harcanan boya girilen satırdan bir sonrakine kadar
+    t["parti"] = t["boya_kg"].fillna(0).gt(0).cumsum()
+    t["firma"] = t["firma"].where(t["boya_kg"].fillna(0) > 0).astype(object)
+    t["firma"] = t.groupby("parti")["firma"].transform("first")
+    t["firma"] = t["firma"].map(lambda v: _metin(v).upper() if _metin(v) else "BELİRSİZ")
+    # Boş renk hücresi = partinin rengi (boya yalnız ilk satıra girilir)
+    t["boya_kodu"] = t["boya_kodu"].map(lambda v: (_metin(v) or "").upper() or None)
+    t["boya_kodu"] = t.groupby("parti")["boya_kodu"].transform("first").fillna("–")
+    t["musteri"] = t["musteri"].map(_metin)
+    t["profil"] = t["profil"].map(_metin)
+    return t.reset_index(drop=True)
+
+
+@rapor("tozboya_hurda_boya", ("toz boya", "yillik"))
+def tozboya_hurda_boya(yol):
+    sayfa = _sayfa(yol, "uretim hesaplama")
+    if sayfa is None:
+        return pd.DataFrame(columns=["ay", "hurda_boya_kg"])
+    d = pd.read_excel(yol, sheet_name=sayfa, header=None)
+    i, hucre = _baslik_satiri(d, "hurda boya kg")
+    if i is None:
+        return pd.DataFrame(columns=["ay", "hurda_boya_kg"])
+    j_ay, j_kg = _sutun(hucre, "tarih"), _sutun(hucre, "hurda boya kg")
+    yil = int((re.findall(r"20\d\d", Path(yol).name) or [2026])[0])
+    satir = []
+    for k in range(i + 1, min(i + 14, len(d))):
+        ay = _ay_no(d.iat[k, j_ay]) if isinstance(d.iat[k, j_ay], str) else None
+        kg = pd.to_numeric(d.iat[k, j_kg], errors="coerce")
+        if ay and pd.notna(kg):
+            satir.append({"ay": pd.Timestamp(yil, ay, 1), "hurda_boya_kg": float(kg)})
+    return pd.DataFrame(satir, columns=["ay", "hurda_boya_kg"])
+
+
+def _kg(d, i, j):
+    v = pd.to_numeric(d.iat[i, j], errors="coerce") if j is not None else None
+    return 0.0 if v is None or pd.isna(v) else float(v)
+
+
+KIMYASAL_BANYO = {"asindirma": "Aşındırma", "yag alma": "Yağ Alma",
+                  "notralizasyon": "Nötralizasyon", "kromfree": "Kromfree"}
+
+
+@rapor("tozboya_kimyasal", ("toz boya", "yillik"))
+def tozboya_kimyasal(yol):
+    """Satır başına: ay, kimyasal (banyo), ürün, kurulum kg, takviye kg,
+    durulama kg; hedef_alt/hedef_ust (g/m², 'Öngörülen' tablosundan)."""
+    sayfa = _sayfa(yol, "kimyasal")
+    if sayfa is None:
+        return pd.DataFrame()
+    d = pd.read_excel(yol, sheet_name=sayfa, header=None)
+    i, hucre = _baslik_satiri(d, "kimyasal", "kurulum")
+    if i is None:
+        return pd.DataFrame()
+    j_ay, j_ad, j_kur = _sutun(hucre, "tarih"), _sutun(hucre, "kimyasal"), _sutun(hucre, "kurulum")
+    j_dur = _sutun(hucre, "durulama")
+    j_banyo = {ad: _sutun(hucre, k) for k, ad in KIMYASAL_BANYO.items() if _sutun(hucre, k) is not None}
+    yil = int((re.findall(r"20\d\d", Path(yol).name) or [2026])[0])
+    ay, satir = None, []
+    for k in range(i + 1, len(d)):
+        etiket = d.iat[k, j_ay]
+        if isinstance(etiket, str):
+            if "toplam" in _sade(etiket):
+                break
+            ay = _ay_no(etiket) or ay
+        ad = _metin(d.iat[k, j_ad])
+        if not ay or not ad:
+            continue
+        banyo = next((b for s, b in KIMYASAL_BANYO.items() if s in _sade(ad)), ad)
+        takviye = sum(_kg(d, k, j) for j in j_banyo.values())
+        kurulum, durulama = _kg(d, k, j_kur), _kg(d, k, j_dur)
+        satir.append({"ay": pd.Timestamp(yil, ay, 1), "kimyasal": banyo,
+                      "urun": ad.split("/", 1)[-1].strip(), "kurulum_kg": kurulum,
+                      "takviye_kg": takviye, "durulama_kg": durulama})
+    t = pd.DataFrame(satir)
+    if t.empty:
+        return t
+    # Hedef aralıklar: 'Öngörülen(Gr/m2)' sütunu, solunda kimyasal adı
+    t["hedef_alt"] = t["hedef_ust"] = float("nan")
+    for r in range(len(d)):
+        for c in range(d.shape[1]):
+            if isinstance(d.iat[r, c], str) and "ongorulen" in _sade(d.iat[r, c]):
+                j_k = next((cc for cc in range(c) if isinstance(d.iat[r, cc], str)
+                            and _sade(d.iat[r, cc]) == "kimyasal"), None)
+                for rr in range(r + 1, min(r + 8, len(d))):
+                    aralik = re.findall(r"\d+(?:[.,]\d+)?", str(d.iat[rr, c]))
+                    if j_k is None or len(aralik) != 2:
+                        continue
+                    banyo = next((b for s, b in KIMYASAL_BANYO.items()
+                                  if s in _sade(d.iat[rr, j_k])), None)
+                    alt_, ust = (float(a.replace(",", ".")) for a in aralik)
+                    t.loc[t["kimyasal"] == banyo, ["hedef_alt", "hedef_ust"]] = alt_, ust
+    return t
 
 
 # ---------------------------------------------------------------------

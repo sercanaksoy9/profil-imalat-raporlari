@@ -54,6 +54,21 @@
    "kaynak": "PROFİL YOKLAMA.xlsx",
    "degisme": 1795759225,
    "kayit": 1604
+  },
+  "tozboya_detay": {
+   "kaynak": "2026 TOZ BOYA YILLIK ÜRETİM RAPORU.xlsx",
+   "degisme": 1795767805,
+   "kayit": 561
+  },
+  "tozboya_hurda_boya": {
+   "kaynak": "2026 TOZ BOYA YILLIK ÜRETİM RAPORU.xlsx",
+   "degisme": 1795767805,
+   "kayit": 10
+  },
+  "tozboya_kimyasal": {
+   "kaynak": "2026 TOZ BOYA YILLIK ÜRETİM RAPORU.xlsx",
+   "degisme": 1795767805,
+   "kayit": 58
   }
  },
  "olusturma": "2026-11-27T15:53:09"
