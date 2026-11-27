@@ -256,16 +256,47 @@ TB_SUTUN = {"tarih": ("tarih",), "musteri": ("musteri",), "profil": ("profil no"
             "konveyor_saat": ("konveyor",)}
 
 
+def _birlesik_araliklar(yol, sayfa):
+    """Sayfadaki birleştirilmiş hücre aralıkları [(ilk_satır, son_satır, ilk_sütun, son_sütun)]
+    (1'den başlar). Tüm çalışma kitabını openpyxl ile açmak yerine yalnız sayfanın
+    XML'indeki <mergeCell> etiketleri okunur (~1,5 sn yerine ~0,02 sn)."""
+    import posixpath
+    import zipfile
+    from xml.etree import ElementTree as ET
+    ns = {"m": "http://schemas.openxmlformats.org/spreadsheetml/2006/main",
+          "r": "http://schemas.openxmlformats.org/officeDocument/2006/relationships"}
+    with zipfile.ZipFile(yol) as z:
+        kitap = ET.fromstring(z.read("xl/workbook.xml"))
+        rid = next((s.get(f"{{{ns['r']}}}id") for s in kitap.iterfind("m:sheets/m:sheet", ns)
+                    if s.get("name") == sayfa), None)
+        bag = ET.fromstring(z.read("xl/_rels/workbook.xml.rels"))
+        hedef = next((b.get("Target") for b in bag if b.get("Id") == rid), None)
+        if hedef is None:
+            return []
+        hedef = hedef.lstrip("/") if hedef.startswith("/") else posixpath.normpath("xl/" + hedef)
+        xml = z.read(hedef).decode("utf-8", "ignore")
+
+    def hucre(ref):
+        m = re.match(r"([A-Z]+)(\d+)", ref)
+        sutun = 0
+        for c in m.group(1):
+            sutun = sutun * 26 + ord(c) - 64
+        return int(m.group(2)), sutun
+    araliklar = []
+    for ref in re.findall(r'<mergeCell [^>]*ref="([A-Z]+\d+:[A-Z]+\d+)"', xml):
+        (r1, c1), (r2, c2) = (hucre(x) for x in ref.split(":"))
+        araliklar.append((r1, r2, c1, c2))
+    return araliklar
+
+
 def _birlesik_doldur(yol, sayfa, d, sutunlar):
     """Birleştirilmiş hücrelerin değerini kapsadığı tüm satırlara yazar (yalnız .xlsx)."""
     if not str(yol).lower().endswith((".xlsx", ".xlsm")):
         return
-    import openpyxl
-    ws = openpyxl.load_workbook(yol, read_only=False, data_only=True)[sayfa]
-    for r in ws.merged_cells.ranges:
+    for r1, r2, c1, c2 in _birlesik_araliklar(yol, sayfa):
         for j in sutunlar:
-            if j is not None and r.min_col <= j + 1 <= r.max_col and r.min_row <= len(d):
-                d.iloc[r.min_row - 1:r.max_row, j] = d.iat[r.min_row - 1, j]
+            if j is not None and c1 <= j + 1 <= c2 and r1 <= len(d):
+                d.iloc[r1 - 1:r2, j] = d.iat[r1 - 1, j]
 
 
 @rapor("tozboya_detay", ("toz boya", "yillik"))

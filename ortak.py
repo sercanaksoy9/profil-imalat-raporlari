@@ -1,4 +1,6 @@
 """Sayfaların ortak yardımcıları: biçimlendirme, renkler, veri yükleme."""
+from pathlib import Path
+
 import altair as alt
 import pandas as pd
 import streamlit as st
@@ -186,10 +188,22 @@ def _ozetten(yol, degisme):
     return pd.read_parquet(yol)
 
 
+@st.cache_data(ttl=30, show_spinner=False)
+def _kaynak_yolu(anahtar):
+    """Raporun Excel'i: klasör taraması (OneDrive'da ~150 dosya) her tıklamada
+    değil 30 sn'de bir yapılır. Dosyanın değişme zamanı yine her seferinde okunur."""
+    yol = raporlar.kaynak_dosyasi(anahtar)
+    return str(yol) if yol is not None else None
+
+
 def rapor_verisi(anahtar):
     """(tablo, kaynak dosya adı, değişme zamanı, mod) ya da veri yoksa None.
     Bu bilgisayarda Excel'den, bulutta senkron özetinden okunur."""
-    yol = raporlar.kaynak_dosyasi(anahtar)
+    yol = _kaynak_yolu(anahtar)
+    if yol is not None and not Path(yol).exists():   # taşındı/silindi: yeniden tara
+        _kaynak_yolu.clear()
+        yol = _kaynak_yolu(anahtar)
+    yol = Path(yol) if yol is not None else None
     if yol is not None:
         degisme = yol.stat().st_mtime
         try:
