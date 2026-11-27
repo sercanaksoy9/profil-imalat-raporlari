@@ -256,6 +256,18 @@ TB_SUTUN = {"tarih": ("tarih",), "musteri": ("musteri",), "profil": ("profil no"
             "konveyor_saat": ("konveyor",)}
 
 
+def _birlesik_doldur(yol, sayfa, d, sutunlar):
+    """Birleştirilmiş hücrelerin değerini kapsadığı tüm satırlara yazar (yalnız .xlsx)."""
+    if not str(yol).lower().endswith((".xlsx", ".xlsm")):
+        return
+    import openpyxl
+    ws = openpyxl.load_workbook(yol, read_only=False, data_only=True)[sayfa]
+    for r in ws.merged_cells.ranges:
+        for j in sutunlar:
+            if j is not None and r.min_col <= j + 1 <= r.max_col and r.min_row <= len(d):
+                d.iloc[r.min_row - 1:r.max_row, j] = d.iat[r.min_row - 1, j]
+
+
 @rapor("tozboya_detay", ("toz boya", "yillik"))
 def tozboya_detay(yol):
     sayfa = _sayfa(yol, "yillik rapor")
@@ -265,20 +277,23 @@ def tozboya_detay(yol):
     i, hucre = _baslik_satiri(d, "harcanan boya", "toplam m")
     if i is None:
         return pd.DataFrame()
+    # Renk ve firma hücreleri birden çok satırı kapsayan birleştirilmiş hücreler;
+    # pandas değeri yalnız ilk satıra koyar, kapsanan satırlara da yayılır.
+    _birlesik_doldur(yol, sayfa, d, [_sutun(hucre, *TB_SUTUN[a]) for a in ("boya_kodu", "firma", "musteri")])
     t = pd.DataFrame({ad: d.iloc[i + 1:, _sutun(hucre, *k)] if _sutun(hucre, *k) is not None
                       else None for ad, k in TB_SUTUN.items()})
     t["tarih"] = pd.to_datetime(t["tarih"], errors="coerce")
     t = t[t["tarih"].notna()].copy()
     for c in ("net_kg", "hurda_kg", "m2", "boya_kg", "saat", "konveyor_saat"):
         t[c] = pd.to_numeric(t[c], errors="coerce").astype(float)
-    # Boya partisi: harcanan boya girilen satırdan bir sonrakine kadar
+    # Boya partisi: harcanan boya (birleştirilmiş) hücresinin kapsadığı satırlar.
+    # Firma/renk partinin boya girilen satırından alınır (boyanın sahibi odur).
     t["parti"] = t["boya_kg"].fillna(0).gt(0).cumsum()
-    t["firma"] = t["firma"].where(t["boya_kg"].fillna(0) > 0).astype(object)
-    t["firma"] = t.groupby("parti")["firma"].transform("first")
-    t["firma"] = t["firma"].map(lambda v: _metin(v).upper() if _metin(v) else "FİRMA GİRİLMEMİŞ")
-    # Boş renk hücresi = partinin rengi (boya yalnız ilk satıra girilir)
-    t["boya_kodu"] = t["boya_kodu"].map(lambda v: (_metin(v) or "").upper() or None)
-    t["boya_kodu"] = t.groupby("parti")["boya_kodu"].transform("first").fillna("–")
+    for c in ("firma", "boya_kodu"):
+        t[c] = t[c].map(lambda v: (_metin(v) or "").upper() or None)
+        t[c] = t.groupby("parti")[c].transform("first")
+    t["firma"] = t["firma"].fillna("FİRMA GİRİLMEMİŞ")
+    t["boya_kodu"] = t["boya_kodu"].fillna("–")
     t["musteri"] = t["musteri"].map(_metin)
     t["profil"] = t["profil"].map(_metin)
     return t.reset_index(drop=True)
