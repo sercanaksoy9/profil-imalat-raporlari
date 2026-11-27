@@ -14,6 +14,9 @@ from pathlib import Path
 
 import pandas as pd
 
+# .xlsx için openpyxl yerine calamine (Rust): aynı sonuç, 4-7 kat hızlı okuma
+pd.set_option("io.excel.xlsx.reader", "calamine")
+
 UYGULAMA_KLASORU = Path(__file__).resolve().parent
 VARSAYILAN_KLASOR = Path(r"C:\Users\seco_\OneDrive\Masaüstü\ALBOND RAPORLAR")
 # Hangi Windows kullanıcısında çalışırsa çalışsın (seco_, nb, ...) kendi OneDrive yolu

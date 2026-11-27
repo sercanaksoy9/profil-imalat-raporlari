@@ -24,10 +24,19 @@ if veri_ is None or veri_[0].empty:
     st.stop()
 kayit, kaynak_adi, degisme, mod = veri_
 kaynak_notu(kaynak_adi, degisme, mod)
-kayit = kayit[kayit["kalip"].notna()].copy()
-kayit["kalip"] = kayit["kalip"].astype(int)
-# Aynı müşterinin farklı yazılışları birleştirilir (tablo: musteriler.py)
-kayit["musteri"] = musteriler.birlestir(kayit["musteri"])
+
+
+@st.cache_data(show_spinner=False)
+def hazirla(kayit, surum=1):
+    """Kalıplı kayıtlar + birleşik müşteri adları (her tıklamada değil, veri değişince)."""
+    kayit = kayit[kayit["kalip"].notna()].copy()
+    kayit["kalip"] = kayit["kalip"].astype(int)
+    # Aynı müşterinin farklı yazılışları birleştirilir (tablo: musteriler.py)
+    kayit["musteri"] = musteriler.birlestir(kayit["musteri"])
+    return kayit
+
+
+kayit = hazirla(kayit)
 
 
 def ozetle(t):
@@ -47,6 +56,7 @@ def ozetle(t):
     }
 
 
+@st.cache_data(show_spinner=False)
 def kalip_tablosu(t):
     """Her kalıp için dönem toplamları (arama listesi ve sıralama)."""
     t = t.assign(_p=t["piston"].fillna(0) * t["biyet_adet"].where(t["piston"].notna(), 0),
