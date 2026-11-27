@@ -275,7 +275,7 @@ def tozboya_detay(yol):
     t["parti"] = t["boya_kg"].fillna(0).gt(0).cumsum()
     t["firma"] = t["firma"].where(t["boya_kg"].fillna(0) > 0).astype(object)
     t["firma"] = t.groupby("parti")["firma"].transform("first")
-    t["firma"] = t["firma"].map(lambda v: _metin(v).upper() if _metin(v) else "BELİRSİZ")
+    t["firma"] = t["firma"].map(lambda v: _metin(v).upper() if _metin(v) else "FİRMA GİRİLMEMİŞ")
     # Boş renk hücresi = partinin rengi (boya yalnız ilk satıra girilir)
     t["boya_kodu"] = t["boya_kodu"].map(lambda v: (_metin(v) or "").upper() or None)
     t["boya_kodu"] = t.groupby("parti")["boya_kodu"].transform("first").fillna("–")
